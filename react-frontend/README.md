@@ -3,6 +3,13 @@
 Firstly, ensure that npm is installed visit: 
 https://nodejs.org
 
+
+Then to install the dependencies run this command:
+
+```
+npm install
+```
+
 Then to run the frontend application, run the following command:
 
 ```
