@@ -1,2 +1,15 @@
 # P-Bit_WebApp
-Repository for the Front and Back end of the P-Bit data visualization Web App
+
+## Project Overview
+
+### Tech Stack
+- React
+- FastAPI
+- AWS DynamoDB
+- Kakfa
+
+## Team Members
+- Felix Roberts Shaw s3958543@student.rmit.edu.au
+- Lucas Aponso s3896348@student.rmit.edu.au
+- Aerfate Abuduwaili s3993961@student.rmit.edu.au
+- Anssar Almashama s3460129@student.rmit.edu.au
