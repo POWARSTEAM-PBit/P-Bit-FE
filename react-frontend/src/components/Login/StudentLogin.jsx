@@ -44,6 +44,10 @@ export default function StudentLogin() {
           Are you a teacher?{" "}
           <Link to="/teacher" className="link">Login here</Link>
         </p>
+        <p className="register-link">
+          Don't have an account?{" "}
+          <Link to="/register" className="link"> Register here</Link>
+        </p>
       </form>
     </div>
   );

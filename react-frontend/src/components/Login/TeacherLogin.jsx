@@ -14,7 +14,7 @@ export default function TeacherLogin() {
   return (
     <div className="container">
       <form onSubmit={handleSubmit} className="form">
-        <h2 className="title">Teacher Login</h2>
+        <h2 className="title">POWARSTEAM P-Bit Login</h2>
 
         <label className="label" htmlFor="email">Email:</label>
         <input
@@ -43,6 +43,11 @@ export default function TeacherLogin() {
         <p className="login-link">
           Are you a student?{" "}
           <Link to="/" className="link">Login here</Link>
+        </p>
+
+        <p className="register-link">
+          Don't have an account?{" "}
+          <Link to="/register" className="link"> Register here</Link>
         </p>
       </form>
     </div>
