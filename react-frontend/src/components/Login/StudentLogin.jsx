@@ -14,7 +14,7 @@ export default function StudentLogin() {
   return (
     <div className="container">
       <form onSubmit={handleSubmit} className="form">
-        <h2 className="title">Student Login</h2>
+        <h2 className="title">POWARSTEAM P-Bit Login</h2>
 
         <label className="label" htmlFor="username">Username:</label>
         <input
