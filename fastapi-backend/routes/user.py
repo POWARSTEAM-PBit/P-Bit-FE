@@ -21,7 +21,8 @@ class user_login(BaseModel):
     password: str
     user_type: user_type
 
-@router.post("/login")
+
+@router.post("/login", tags=["user"], status_code=status.HTTP_200_OK)
 async def login(user: user_login, request: Request, db: Session = Depends(get_db)):
 
     user_model_map = {
