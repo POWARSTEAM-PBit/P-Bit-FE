@@ -1,14 +1,29 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import "./LoginForm.css";
 
 export default function StudentLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(`Logging in as Student\nUsername: ${username}\nPassword: ${password}`);
+
+    try {
+      await login({
+        user_id: username,
+        password,
+        user_type: "student",
+      });
+      // Redirect after successful login
+      navigate("/dashboard");
+    } catch (err) {
+      alert("Login failed. Please check your credentials.");
+      console.error(err);
+    }
   };
 
   return (
@@ -46,7 +61,7 @@ export default function StudentLogin() {
         </p>
         <p className="register-link">
           Don't have an account?{" "}
-          <Link to="/register" className="link"> Register here</Link>
+          <Link to="/register" className="link">Register here</Link>
         </p>
       </form>
     </div>

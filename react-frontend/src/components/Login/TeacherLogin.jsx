@@ -1,14 +1,28 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import "./LoginForm.css";
 
 export default function TeacherLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(`Logging in as Teacher\nEmail: ${email}\nPassword: ${password}`);
+    
+    try {
+        await login({
+            user_id: email,
+            password,
+            user_type: "teacher",
+        });
+        navigate("/dashboard");
+    } catch (err) {
+        alert("Login Failed");
+        console.error(err);
+    }
   };
 
   return (
