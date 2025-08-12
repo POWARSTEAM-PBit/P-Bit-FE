@@ -1,15 +1,24 @@
-# P-Bit_WebApp
+## Execute React Frontend
 
-## Project Overview
+Firstly, ensure that npm is installed visit: 
+https://nodejs.org
 
-### Tech Stack
-- React
-- FastAPI
-- AWS DynamoDB
-- Kakfa
 
-## Team Members
-- Felix Roberts Shaw s3958543@student.rmit.edu.au
-- Lucas Aponso s3896348@student.rmit.edu.au
-- Aerfate Abuduwaili s3993961@student.rmit.edu.au
-- Anssar Almashama s3460129@student.rmit.edu.au
+Then to install the dependencies run this command:
+
+```
+npm install
+```
+
+Then to run the frontend application, run the following command:
+
+```
+npm run dev
+```
+
+To run the application in production mode, execute the command below:
+
+```
+npm run build
+```
+
