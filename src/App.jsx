@@ -7,7 +7,7 @@ export default function App() {
             <Header />
             <div style={{ padding: '2rem' }}>
                 <h1>Welcome to MyApp</h1>
-                <p>This is your starting page content.</p>
+                <p>Hi! This is your starting page content.</p>
             </div>
         </>
     );
