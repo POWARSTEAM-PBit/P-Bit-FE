@@ -1,0 +1,68 @@
+.appBar {
+    background-color: #1976d2;
+    width: 100%;
+    left: 0;
+    right: 0;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
+}
+
+/* Left cluster */
+.left {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Middle cluster (links) — grows to push profile to the right */
+.middle {
+    display: none;
+    gap: 8px;
+    margin-left: 16px;
+    margin-right: auto;  /* key: pushes the profile cluster to the far right */
+}
+
+.right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+
+.logoDesktop,
+.logoMobile {
+    margin-right: 8px;
+    font-family: monospace;
+    font-weight: 700;
+    letter-spacing: 0.2rem;
+    color: white;
+    text-decoration: none;
+}
+
+.logoDesktop { display: none; }
+.logoMobile { display: flex; }
+
+.menuButtonMobile { display: flex; }
+
+.navButton {
+    margin: 8px 0;
+    color: white;
+}
+
+.menuItem { text-align: center; }
+
+/* Responsive */
+@media (min-width: 900px) {
+    .logoDesktop { display: flex; }
+    .logoMobile { display: none; }
+    .menuButtonMobile { display: none; }
+    .middle { display: flex; }   /* show desktop links */
+}
