@@ -1,4 +1,4 @@
-name: Build Vite React App
+name: P-Bit FE Build/Test Workflow
 
 on:
   push:
