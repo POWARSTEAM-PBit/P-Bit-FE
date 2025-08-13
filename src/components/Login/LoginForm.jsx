@@ -1,10 +1,12 @@
+// components/Login/LoginForm.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import "./LoginForm.css";
 
-export default function StudentLogin() {
-  const [username, setUsername] = useState("");
+export default function LoginForm({ mode }) {
+  // mode: "student" or "teacher"
+  const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -14,11 +16,10 @@ export default function StudentLogin() {
 
     try {
       await login({
-        user_id: username,
+        user_id: userId,
         password,
-        user_type: "student",
+        user_type: mode,
       });
-      // Redirect after successful login
       navigate("/dashboard");
     } catch (err) {
       alert("Login failed. Please check your credentials.");
@@ -31,15 +32,17 @@ export default function StudentLogin() {
       <form onSubmit={handleSubmit} className="form">
         <h2 className="title">POWARSTEAM P-Bit Login</h2>
 
-        <label className="label" htmlFor="username">Username:</label>
+        <label className="label" htmlFor="userId">
+          {mode === "student" ? "Username:" : "Email:"}
+        </label>
         <input
-          id="username"
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          id="userId"
+          type={mode === "student" ? "text" : "email"}
+          value={userId}
+          onChange={(e) => setUserId(e.target.value)}
           required
           className="input"
-          placeholder="Enter your username"
+          placeholder={mode === "student" ? "Enter your username" : "you@example.com"}
         />
 
         <label className="label" htmlFor="password">Password:</label>
@@ -55,13 +58,18 @@ export default function StudentLogin() {
 
         <button type="submit" className="button">Login</button>
 
-        <p className="login-link">
-          Are you a teacher?{" "}
-          <Link to="/teacher" className="link">Login here</Link>
-        </p>
+        {mode === "student" ? (
+          <p className="login-link">
+            Are you a teacher? <Link to="/login-teacher" className="link">Login here</Link>
+          </p>
+        ) : (
+          <p className="login-link">
+            Are you a student? <Link to="/login-student" className="link">Login here</Link>
+          </p>
+        )}
+
         <p className="register-link">
-          Don't have an account?{" "}
-          <Link to="/register" className="link">Register here</Link>
+          Don't have an account? <Link to="/register" className="link">Register here</Link>
         </p>
       </form>
     </div>

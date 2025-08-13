@@ -1,30 +1,18 @@
-// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-// import StudentLogin from "./components/Login/StudentLogin";
-// import TeacherLogin from "./components/Login/TeacherLogin";
-
-// function App() {
-//   return (
-//     <Router>
-//       <Routes>
-//         <Route path="/" element={<StudentLogin />} />
-//         <Route path="/teacher" element={<TeacherLogin />} />
-//       </Routes>
-//     </Router>
-//   );
-// }
-
-// export default App;
-import React from 'react';
-import Header from "./components/Header.jsx";
+import { Routes, Route } from 'react-router-dom';
+import Header from './components/Header/Header';
+import StudentLoginPage from './pages/StudentLoginPage';
+import TeacherLoginPage from './pages/TeacherLoginPage';
 
 export default function App() {
-    return (
-        <>
-            <Header />
-            <div style={{ padding: '2rem' }}>
-                <h1>Welcome to MyApp</h1>
-                <p>This is your starting page content.</p>
-            </div>
-        </>
-    );
+  return (
+    <>
+      <Header />
+
+      <Routes>
+        <Route path="/login-student" element={<StudentLoginPage />} />
+        <Route path="/login-teacher" element={<TeacherLoginPage />} />
+        {/* <Route path="/register" element={<StudentLoginPage />} /> */} 
+      </Routes>
+    </>
+  );
 }
