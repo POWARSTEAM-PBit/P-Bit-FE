@@ -1,8 +1,10 @@
 import axios from "axios";
 
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
 const client = axios.create({
-  baseURL: "http://localhost:8000", // <-- hardcoded URL here
-  withCredentials: true, // optional: needed for cookies
+  baseURL: baseUrl,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
