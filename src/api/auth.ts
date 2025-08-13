@@ -1,24 +1,40 @@
 import client from "./client";
+import { ApiResp } from "./int";
 
-interface LoginData {
-  user_id: string; // email or username based on user_type
-  password: string;
-  user_type: "student" | "teacher";
-}
-
-interface User {
-  email?: string;   // for teachers
-  username?: string; // for students
+/**
+ * @brief The following interface, describes a user type
+ * The email or username can be set depending on the user role
+ * And name is provided.
+ */
+export interface User {
+  email?: string;
+  username?: string;
   name: string;
   role: "student" | "teacher";
 }
 
-interface LoginResponse {
+/**
+ * @brief The interface relates to what data (payload) is
+ * recieved from communicating with the backend API.
+ */
+export interface LoginData {
+  api_key: string;
   token: string;
   user: User;
 }
 
-export const login = async (data: LoginData): Promise<LoginResponse> => {
-  const response = await client.post<LoginResponse>("/user/login", data);
+/**
+ * @brief The following interface, refers
+ * to the input provided by the user in the 
+ * Login Forms.
+ */
+export interface LoginInput {
+  user_id: string; //either username or email
+  password: string;
+  user_type: "student" | "teacher";
+}
+
+export const login = async (data: LoginInput): Promise<ApiResp<LoginData>> => {
+  const response = await client.post<ApiResp<LoginData>>("/user/login", data);
   return response.data;
 };
