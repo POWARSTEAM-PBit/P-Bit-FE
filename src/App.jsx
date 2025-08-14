@@ -1,12 +1,17 @@
-import React from 'react';
-import Header from "./components/Header.jsx";
-import Register from "./pages/Register.jsx"; // 新增的注册页
+import { Routes, Route } from 'react-router-dom';
+import Header from './components/Header/Header';
+import StudentLoginPage from './pages/StudentLoginPage';
+import TeacherLoginPage from './pages/TeacherLoginPage';
+
 export default function App() {
   return (
     <>
       <Header />
-      <div style={{padding: 12, color: 'yellow'}}>APP from NEW App.jsx</div>
-      <Register />
+      <Routes>
+        <Route path="/login-student" element={<StudentLoginPage />} />
+        <Route path="/login-teacher" element={<TeacherLoginPage />} />
+        {/* <Route path="/register" element={<StudentLoginPage />} /> */} 
+      </Routes>
     </>
   );
 }
