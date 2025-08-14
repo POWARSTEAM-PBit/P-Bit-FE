@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Box, Card, CardContent, TextField, Typography, Button, Switch, FormControlLabel, Alert, CircularProgress} from "@mui/material";
 import { useAuth } from "../../../hooks/useAuth";
+import "./RegisterForm.css"; // Assuming you have some styles in this file
 
 /**
  * Small iOS-like switch using MUI Switch with light styling tweaks.
@@ -62,11 +63,11 @@ export default function RegisterForm() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const user_id = userName;
+    // var user_id = userName;
 
-    if (userType == "teacher") {
-      user_id = email;
-    }
+    // if (userType == "teacher") {
+    //   user_id = email;
+    // }
 
     try {
       await register({
@@ -115,87 +116,136 @@ export default function RegisterForm() {
   // }
   }
   
-  return (
-    <Box sx={{ display: "grid", placeItems: "center", minHeight: "calc(100vh - 64px)", p: 2 }}>
-      <Card sx={{ width: "100%", maxWidth: 520, borderRadius: 3, boxShadow: 6 }}>
-        <CardContent>
-          {/* Header row: title + switch */}
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-            <Typography variant="h5" fontWeight={700}>
-              Register
-            </Typography>
+//   return (
+//     <Box sx={{ display: "grid", placeItems: "center", minHeight: "calc(100vh - 64px)", p: 2 }}>
+//       <Card sx={{ width: "100%", maxWidth: 520, borderRadius: 3, boxShadow: 6 }}>
+//         <CardContent>
+//           {/* Header row: title + switch */}
+//           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+//             <Typography variant="h5" fontWeight={700}>
+//               Register
+//             </Typography>
 
-            <FormControlLabel
-              control={
-                <IOSSwitch
-                  checked={isTeacher}
-                  onChange={(e) => setIsTeacher(e.target.checked)}
-                />
-              }
-              label={isTeacher ? "Teacher" : "Student"}
-            />
-          </Box>
+//             <FormControlLabel
+//               control={
+//                 <IOSSwitch
+//                   checked={isTeacher}
+//                   onChange={(e) => setIsTeacher(e.target.checked)}
+//                 />
+//               }
+//               label={isTeacher ? "Teacher" : "Student"}
+//             />
+//           </Box>
 
-          {/* Message box */}
-          {msg && (
-            <Alert severity={msg.type} sx={{ mb: 2 }}>
-              {msg.text}
-            </Alert>
-          )}
+//           {/* Message box */}
+//           {msg && (
+//             <Alert severity={msg.type} sx={{ mb: 2 }}>
+//               {msg.text}
+//             </Alert>
+//           )}
 
-          {/* Form */}
-          <Box component="form" onSubmit={handleSubmit} sx={{ display: "grid", gap: 2 }}>
-            <TextField
-              label="First name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-            />
-            <TextField
-              label="Last name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              inputProps={{ minLength: 8 }}
-              required
-            />
+//           {/* Form */}
+//           <Box component="form" onSubmit={handleSubmit} sx={{ display: "grid", gap: 2 }}>
+//             <TextField
+//               label="First name"
+//               value={firstName}
+//               onChange={(e) => setFirstName(e.target.value)}
+//               required
+//             />
+//             <TextField
+//               label="Last name"
+//               value={lastName}
+//               onChange={(e) => setLastName(e.target.value)}
+//               required
+//             />
+//             <TextField
+//               label="Password"
+//               type="password"
+//               value={password}
+//               onChange={(e) => setPassword(e.target.value)}
+//               inputProps={{ minLength: 8 }}
+//               required
+//             />
 
-            {isTeacher ? (
-              <TextField
-                label="Email (Teacher)"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            ) : (
-              <TextField
-                label="Username (Student)"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                helperText="Only letters, numbers, and underscores; 3–32 characters."
-                required
-              />
-            )}
+//             {isTeacher ? (
+//               <TextField
+//                 label="Email (Teacher)"
+//                 type="email"
+//                 value={email}
+//                 onChange={(e) => setEmail(e.target.value)}
+//                 required
+//               />
+//             ) : (
+//               <TextField
+//                 label="Username (Student)"
+//                 value={userName}
+//                 onChange={(e) => setUserName(e.target.value)}
+//                 helperText="Only letters, numbers, and underscores; 3–32 characters."
+//                 required
+//               />
+//             )}
 
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={loading}
-              sx={{ mt: 1 }}
-            >
-              {loading ? <CircularProgress size={22} /> : "Sign up"}
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-    </Box>
-  );
+//             <Button
+//               type="submit"
+//               variant="contained"
+//               size="large"
+//               disabled={loading}
+//               sx={{ mt: 1 }}
+//             >
+//               {loading ? <CircularProgress size={22} /> : "Sign up"}
+//             </Button>
+//           </Box>
+//         </CardContent>
+//       </Card>
+//     </Box>
+//   );
+// }
+
+return (
+  <div className="container">
+    <form onSubmit={handleSubmit} className="form">
+      <h2 className="title">POWARSTEAM P-Bit Login</h2>
+
+      <label className="label" htmlFor="userId">
+        {mode === "student" ? "Username:" : "Email:"}
+      </label>
+      <input
+        id="userId"
+        type={mode === "student" ? "text" : "email"}
+        value={userId}
+        onChange={(e) => setUserId(e.target.value)}
+        required
+        className="input"
+        placeholder={mode === "student" ? "Enter your username" : "you@example.com"}
+      />
+
+      <label className="label" htmlFor="password">Password:</label>
+      <input
+        id="password"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        className="input"
+        placeholder="Enter your password"
+      />
+
+      <button type="submit" className="button">Login</button>
+
+      {mode === "student" ? (
+        <p className="login-link">
+          Are you a teacher? <Link to="/login-teacher" className="link">Login here</Link>
+        </p>
+      ) : (
+        <p className="login-link">
+          Are you a student? <Link to="/login-student" className="link">Login here</Link>
+        </p>
+      )}
+
+      <p className="register-link">
+        Don't have an account? <Link to="/register" className="link">Register here</Link>
+      </p>
+    </form>
+  </div>
+);
 }
