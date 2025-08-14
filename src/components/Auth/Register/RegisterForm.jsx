@@ -1,27 +1,6 @@
-// src/pages/Register.jsx
-import React, { useMemo, useState } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Typography,
-  Button,
-  Switch,
-  FormControlLabel,
-  Alert,
-  CircularProgress,
-} from "@mui/material";
-
-/**
- * API base URL
- * - Prefer reading from .env (Vite style: VITE_*)
- * - Fallback to localhost:8000 so local dev still works if .env is missing
- */
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ??
-  import.meta.env.VITE_API_BASE ??
-  "http://127.0.0.1:8000";
+import { useMemo, useState } from "react";
+import { Box, Card, CardContent, TextField, Typography, Button, Switch, FormControlLabel, Alert, CircularProgress} from "@mui/material";
+import { useAuth } from "../../../hooks/useAuth";
 
 /**
  * Small iOS-like switch using MUI Switch with light styling tweaks.
@@ -58,9 +37,10 @@ function IOSSwitch(props) {
  * - Validates inputs on the client side before sending to the backend.
  * - Calls POST /user/register on the FastAPI backend.
  */
-export default function Register() {
+export default function RegisterForm() {
   // false = student, true = teacher (right side ON = teacher)
   const [isTeacher, setIsTeacher] = useState(false);
+  const { register } = useAuth();
 
   // shared fields
   const [firstName, setFirstName] = useState("");
@@ -82,90 +62,59 @@ export default function Register() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setMsg(null);
+    const user_id = userName;
 
-    // Basic front-end validation
-    if (!firstName.trim() || !lastName.trim() || !password.trim()) {
-      setMsg({
-        type: "error",
-        text: "First name, Last name, and Password are required.",
-      });
-      return;
+    if (userType == "teacher") {
+      user_id = email;
     }
-    if (password.length < 8) {
-      setMsg({ type: "error", text: "Password must be at least 8 characters." });
-      return;
-    }
-
-    if (userType === "teacher") {
-      if (!email.trim()) {
-        setMsg({ type: "error", text: "Email is required for teacher registration." });
-        return;
-      }
-      // Optional: light email format check (backend still does strict validation)
-      if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
-        setMsg({ type: "error", text: "Please enter a valid email address." });
-        return;
-      }
-    } else {
-      if (!userName.trim()) {
-        setMsg({ type: "error", text: "Username is required for student registration." });
-        return;
-      }
-      // Must match backend rule: letters/numbers/underscore, 3-32 chars
-      const re = /^[a-zA-Z0-9_]{3,32}$/;
-      if (!re.test(userName.trim())) {
-        setMsg({
-          type: "error",
-          text:
-            "Username must be 3–32 characters and contain only letters, numbers, and underscores.",
-        });
-        return;
-      }
-    }
-
-    // Build request payload to match backend schema
-    const payload = {
-      user_type: userType,
-      first_name: firstName,
-      last_name: lastName,
-      password,
-      ...(userType === "teacher"
-        ? { email: email.trim() }
-        : { user_name: userName.trim() }),
-    };
 
     try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE}/user/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (res.ok) {
-        setMsg({ type: "success", text: "Registered successfully." });
-        // Clear inputs (or navigate to /login if you add routing)
-        setFirstName("");
-        setLastName("");
-        setPassword("");
-        setEmail("");
-        setUserName("");
-      } else {
-        setMsg({
-          type: "error",
-          text: data?.msg || `Registration failed (${res.status}).`,
-        });
-      }
-    } catch (err) {
-      setMsg({ type: "error", text: `Network error: ${err.message}` });
-    } finally {
-      setLoading(false);
+      await register({
+        first_name: firstName,
+        last_name: lastName,
+        password: password,
+        user_id: user_id
+      })
+    } catch (err)
+    {
+      alter("Register Failed");
+      console.error(err);
     }
-  }
+    //setMsg(null);
+  
 
+  //   try {
+  //     setLoading(true);
+  //     const res = await fetch(`${API_BASE}/user/register`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(payload),
+  //     });
+
+  //     const data = await res.json().catch(() => ({}));
+
+  //     if (res.ok) {
+  //       setMsg({ type: "success", text: "Registered successfully." });
+  //       // Clear inputs (or navigate to /login if you add routing)
+  //       setFirstName("");
+  //       setLastName("");
+  //       setPassword("");
+  //       setEmail("");
+  //       setUserName("");
+  //     } else {
+  //       setMsg({
+  //         type: "error",
+  //         text: data?.msg || `Registration failed (${res.status}).`,
+  //       });
+  //     }
+  //   } catch (err) {
+  //     setMsg({ type: "error", text: `Network error: ${err.message}` });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
+  }
+  
   return (
     <Box sx={{ display: "grid", placeItems: "center", minHeight: "calc(100vh - 64px)", p: 2 }}>
       <Card sx={{ width: "100%", maxWidth: 520, borderRadius: 3, boxShadow: 6 }}>
