@@ -13,8 +13,8 @@ export interface ErrorResp {
  * The data attribute can be any.
  */
 export interface ApiResp<T = any> {
-  success: boolean;
-  message: string;
-  data?: T | null;
-  error?: ErrorResp | null;
+  success: boolean; //true or false, false is error, true no error
+  message: string; //user was successfully logged in
+  data?: T | null; //something or nothing
+  error?: ErrorResp | null; //if null no error
 }
