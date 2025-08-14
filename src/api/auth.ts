@@ -68,6 +68,6 @@ export const login = async (data: LoginInput): Promise<ApiResp<LoginData>> => {
  * @returns 
  */
 export const register = async (data: RegisterInput): Promise<ApiResp<null>> => {
-  const response = await client.post<ApiResp<null>>("/user/login", data);
+  const response = await client.post<ApiResp<null>>("/user/register", data);
   return response.data;
 };

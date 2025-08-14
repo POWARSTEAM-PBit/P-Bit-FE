@@ -1,251 +1,113 @@
-import { useMemo, useState } from "react";
-import { Box, Card, CardContent, TextField, Typography, Button, Switch, FormControlLabel, Alert, CircularProgress} from "@mui/material";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
-import "./RegisterForm.css"; // Assuming you have some styles in this file
+import "./RegisterForm.css";
 
-/**
- * Small iOS-like switch using MUI Switch with light styling tweaks.
- */
-function IOSSwitch(props) {
-  return (
-    <Switch
-      {...props}
-      sx={{
-        width: 52,
-        height: 32,
-        padding: 0,
-        "& .MuiSwitch-switchBase": {
-          padding: 0.5,
-          "&.Mui-checked": {
-            transform: "translateX(20px)",
-          },
-        },
-        "& .MuiSwitch-thumb": {
-          width: 28,
-          height: 28,
-        },
-        "& .MuiSwitch-track": {
-          borderRadius: 999,
-        },
-      }}
-    />
-  );
-}
-
-/**
- * Register page.
- * - Toggle between Student and Teacher via the iOS-style switch.
- * - Validates inputs on the client side before sending to the backend.
- * - Calls POST /user/register on the FastAPI backend.
- */
 export default function RegisterForm() {
-  // false = student, true = teacher (right side ON = teacher)
   const [isTeacher, setIsTeacher] = useState(false);
-  const { register } = useAuth();
-
-  // shared fields
+  const [userId, setUserId] = useState(""); // username or email
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
+  const { register } = useAuth();
 
-  // teacher-only and student-only fields
-  const [email, setEmail] = useState("");
-  const [userName, setUserName] = useState("");
+  const userType = isTeacher ? "teacher" : "student";
 
-  // ui state
-  const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState(null); // { type: 'success' | 'error', text: string }
-
-  const userType = useMemo(
-    () => (isTeacher ? "teacher" : "student"),
-    [isTeacher]
-  );
-
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // var user_id = userName;
-
-    // if (userType == "teacher") {
-    //   user_id = email;
-    // }
-
     try {
       await register({
+        user_id: userId,
+        password,
+        user_type: userType,
         first_name: firstName,
         last_name: lastName,
-        password: password,
-        user_id: user_id
-      })
-    } catch (err)
-    {
-      alter("Register Failed");
+      });
+      alert("Registration successful!");
+      // Reset form
+      setUserId("");
+      setPassword("");
+      setFirstName("");
+      setLastName("");
+    } catch (err) {
+      alert(err);
       console.error(err);
     }
-    //setMsg(null);
-  
+  };
 
-  //   try {
-  //     setLoading(true);
-  //     const res = await fetch(`${API_BASE}/user/register`, {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify(payload),
-  //     });
+  return (
+    <div className="container">
+      <form onSubmit={handleSubmit} className="form">
+        <h2 className="title">POWARSTEAM P-Bit Register</h2>
 
-  //     const data = await res.json().catch(() => ({}));
+        {/* Toggle between teacher and student */}
+        <div style={{ textAlign: "center", marginBottom: "20px" }}>
+          <label style={{ fontWeight: "600", color: "#5c5470" }}>
+            <input
+              type="checkbox"
+              checked={isTeacher}
+              onChange={(e) => setIsTeacher(e.target.checked)}
+              style={{ marginRight: "8px" }}
+            />
+            Registering as a {isTeacher ? "Teacher" : "Student"}
+          </label>
+        </div>
 
-  //     if (res.ok) {
-  //       setMsg({ type: "success", text: "Registered successfully." });
-  //       // Clear inputs (or navigate to /login if you add routing)
-  //       setFirstName("");
-  //       setLastName("");
-  //       setPassword("");
-  //       setEmail("");
-  //       setUserName("");
-  //     } else {
-  //       setMsg({
-  //         type: "error",
-  //         text: data?.msg || `Registration failed (${res.status}).`,
-  //       });
-  //     }
-  //   } catch (err) {
-  //     setMsg({ type: "error", text: `Network error: ${err.message}` });
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }
-  }
-  
-//   return (
-//     <Box sx={{ display: "grid", placeItems: "center", minHeight: "calc(100vh - 64px)", p: 2 }}>
-//       <Card sx={{ width: "100%", maxWidth: 520, borderRadius: 3, boxShadow: 6 }}>
-//         <CardContent>
-//           {/* Header row: title + switch */}
-//           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-//             <Typography variant="h5" fontWeight={700}>
-//               Register
-//             </Typography>
+        <label className="label" htmlFor="firstName">First Name:</label>
+        <input
+          id="firstName"
+          type="text"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          required
+          className="input"
+          placeholder="Enter your first name"
+        />
 
-//             <FormControlLabel
-//               control={
-//                 <IOSSwitch
-//                   checked={isTeacher}
-//                   onChange={(e) => setIsTeacher(e.target.checked)}
-//                 />
-//               }
-//               label={isTeacher ? "Teacher" : "Student"}
-//             />
-//           </Box>
+        <label className="label" htmlFor="lastName">Last Name:</label>
+        <input
+          id="lastName"
+          type="text"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          required
+          className="input"
+          placeholder="Enter your last name"
+        />
 
-//           {/* Message box */}
-//           {msg && (
-//             <Alert severity={msg.type} sx={{ mb: 2 }}>
-//               {msg.text}
-//             </Alert>
-//           )}
+        <label className="label" htmlFor="userId">
+          {isTeacher ? "Email:" : "Username:"}
+        </label>
+        <input
+          id="userId"
+          type={isTeacher ? "email" : "text"}
+          value={userId}
+          onChange={(e) => setUserId(e.target.value)}
+          required
+          className="input"
+          placeholder={isTeacher ? "you@example.com" : "Enter your username"}
+        />
 
-//           {/* Form */}
-//           <Box component="form" onSubmit={handleSubmit} sx={{ display: "grid", gap: 2 }}>
-//             <TextField
-//               label="First name"
-//               value={firstName}
-//               onChange={(e) => setFirstName(e.target.value)}
-//               required
-//             />
-//             <TextField
-//               label="Last name"
-//               value={lastName}
-//               onChange={(e) => setLastName(e.target.value)}
-//               required
-//             />
-//             <TextField
-//               label="Password"
-//               type="password"
-//               value={password}
-//               onChange={(e) => setPassword(e.target.value)}
-//               inputProps={{ minLength: 8 }}
-//               required
-//             />
+        <label className="label" htmlFor="password">Password:</label>
+        <input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="input"
+          placeholder="Create a password"
+        />
 
-//             {isTeacher ? (
-//               <TextField
-//                 label="Email (Teacher)"
-//                 type="email"
-//                 value={email}
-//                 onChange={(e) => setEmail(e.target.value)}
-//                 required
-//               />
-//             ) : (
-//               <TextField
-//                 label="Username (Student)"
-//                 value={userName}
-//                 onChange={(e) => setUserName(e.target.value)}
-//                 helperText="Only letters, numbers, and underscores; 3–32 characters."
-//                 required
-//               />
-//             )}
+        <button type="submit" className="button">Register</button>
 
-//             <Button
-//               type="submit"
-//               variant="contained"
-//               size="large"
-//               disabled={loading}
-//               sx={{ mt: 1 }}
-//             >
-//               {loading ? <CircularProgress size={22} /> : "Sign up"}
-//             </Button>
-//           </Box>
-//         </CardContent>
-//       </Card>
-//     </Box>
-//   );
-// }
-
-return (
-  <div className="container">
-    <form onSubmit={handleSubmit} className="form">
-      <h2 className="title">POWARSTEAM P-Bit Login</h2>
-
-      <label className="label" htmlFor="userId">
-        {mode === "student" ? "Username:" : "Email:"}
-      </label>
-      <input
-        id="userId"
-        type={mode === "student" ? "text" : "email"}
-        value={userId}
-        onChange={(e) => setUserId(e.target.value)}
-        required
-        className="input"
-        placeholder={mode === "student" ? "Enter your username" : "you@example.com"}
-      />
-
-      <label className="label" htmlFor="password">Password:</label>
-      <input
-        id="password"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        className="input"
-        placeholder="Enter your password"
-      />
-
-      <button type="submit" className="button">Login</button>
-
-      {mode === "student" ? (
         <p className="login-link">
-          Are you a teacher? <Link to="/login-teacher" className="link">Login here</Link>
+          Already have an account?{" "}
+          <Link to={isTeacher ? "/login-teacher" : "/login-student"} className="link">
+            Login here
+          </Link>
         </p>
-      ) : (
-        <p className="login-link">
-          Are you a student? <Link to="/login-student" className="link">Login here</Link>
-        </p>
-      )}
-
-      <p className="register-link">
-        Don't have an account? <Link to="/register" className="link">Register here</Link>
-      </p>
-    </form>
-  </div>
-);
+      </form>
+    </div>
+  );
 }

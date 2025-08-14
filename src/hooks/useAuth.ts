@@ -3,7 +3,7 @@ import { login as loginApi, register as registerAPI, User, LoginInput, LoginData
 import { ApiResp } from "../api/int";
 
 type LoginResponse = ApiResp<LoginData>;
-type RegisterResponse = ApiResp<null>; // Adjust this if you know what `registerAPI` returns
+type RegisterResponse = ApiResp<null>;
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -36,6 +36,7 @@ export function useAuth() {
         console.error("Username is required for student registration.");
       }
     }
+    console.log("Sending register data:", data);
 
     const res = await registerAPI(data);
 
