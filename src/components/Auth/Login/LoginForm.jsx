@@ -4,25 +4,33 @@ import { useAuth } from "../../../hooks/useAuth";
 import "./LoginForm.css";
 
 export default function LoginForm({ mode }) {
-  // mode: "student" or "teacher"
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
 
     try {
-      await login({
+      const res = await login({
         user_id: userId,
         password,
         user_type: mode,
       });
+
+      if (!res.success) {
+        // ✅ Display backend-provided message
+        setErrorMessage(`❌ ${res.message || "Login failed. Please try again."}`);
+        return;
+      }
+
       navigate("/dashboard");
     } catch (err) {
-      alert("Login failed. Please check your credentials.");
       console.error(err);
+      setErrorMessage("❌ An unexpected error occurred during login.");
     }
   };
 
@@ -30,6 +38,11 @@ export default function LoginForm({ mode }) {
     <div className="container">
       <form onSubmit={handleSubmit} className="form">
         <h2 className="title">POWARSTEAM P-Bit Login</h2>
+
+        {/* ✅ Error Message Display */}
+        {errorMessage && (
+          <p className="error-message">{errorMessage}</p>
+        )}
 
         <label className="label" htmlFor="userId">
           {mode === "student" ? "Username:" : "Email:"}
