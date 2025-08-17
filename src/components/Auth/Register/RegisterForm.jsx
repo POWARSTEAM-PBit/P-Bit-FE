@@ -1,37 +1,61 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
 import "./RegisterForm.css";
 
+/**
+ * @brief User register form.
+ * @returns 
+ */
 export default function RegisterForm() {
   const [isTeacher, setIsTeacher] = useState(false);
-  const [userId, setUserId] = useState(""); // username or email
+  const [userId, setUserId] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState(""); // ✅ NEW
+
   const { register } = useAuth();
+  const navigate = useNavigate();
 
   const userType = isTeacher ? "teacher" : "student";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSuccessMessage("");
+    setErrorMessage(""); // ✅ clear any previous error
+
     try {
-      await register({
+      const res = await register({
         user_id: userId,
         password,
         user_type: userType,
         first_name: firstName,
         last_name: lastName,
       });
-      alert("Registration successful!");
-      // Reset form
+
+      if (!res.success) {
+        setErrorMessage(`❌ ${res.message || "Registration failed. Please try again."}`);
+        return;
+      }
+
+      setSuccessMessage("🎉 Registration successful! Redirecting to login...");
+
+      // Clear form fields
       setUserId("");
       setPassword("");
       setFirstName("");
       setLastName("");
+
+      // Redirect after short delay
+      setTimeout(() => {
+        navigate(userType === "teacher" ? "/login-teacher" : "/login-student");
+      }, 1500);
     } catch (err) {
-      alert(err);
       console.error(err);
+      setErrorMessage("❌ An unexpected error occurred during registration.");
     }
   };
 
@@ -40,7 +64,12 @@ export default function RegisterForm() {
       <form onSubmit={handleSubmit} className="form">
         <h2 className="title">POWARSTEAM P-Bit Register</h2>
 
-        {/* Toggle between teacher and student */}
+        {/* ✅ Error Message */}
+        {errorMessage && <p className="error-message">{errorMessage}</p>}
+
+        {/* ✅ Success Message */}
+        {successMessage && <p className="success-message">{successMessage}</p>}
+
         <div style={{ textAlign: "center", marginBottom: "20px" }}>
           <label style={{ fontWeight: "600", color: "#5c5470" }}>
             <input

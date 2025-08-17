@@ -11,6 +11,7 @@ import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import Avatar from '@mui/material/Avatar';
 import styles from './Header.module.css';
+import { useAuth } from "../../hooks/useAuth";
 
 const pages = [
   { name: 'Home', path: '/' },
@@ -21,6 +22,8 @@ const pages = [
 export default function Header() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElProfile, setAnchorElProfile] = React.useState(null);
+
+  const { isLoggedIn, user } = useAuth();
 
   const handleOpenNavMenu = (e) => setAnchorElNav(e.currentTarget);
   const handleCloseNavMenu = () => setAnchorElNav(null);
@@ -82,31 +85,35 @@ export default function Header() {
           </Typography>
         </Box>
 
-        {/* MIDDLE: Desktop Navigation Buttons */}
-        <Box className={styles.middle}>
-          {pages.map((page) => (
-            <Link to={page.path} key={page.name} className={styles.navButton}>
-              <Button color="inherit">{page.name}</Button>
-            </Link>
-          ))}
-        </Box>
-
-        {/* RIGHT: Profile Menu */}
+        {/* RIGHT: Authenticated / Unauthenticated User Actions */}
         <Box className={styles.right}>
-          <IconButton onClick={handleOpenProfileMenu} color="inherit">
-            <Avatar alt="User Profile" src="/static/images/avatar/1.jpg" />
-          </IconButton>
-          <Menu
-            anchorEl={anchorElProfile}
-            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            open={Boolean(anchorElProfile)}
-            onClose={handleCloseProfileMenu}
-          >
-            <MenuItem onClick={handleCloseProfileMenu}>Profile</MenuItem>
-            <MenuItem onClick={handleCloseProfileMenu}>Settings</MenuItem>
-            <MenuItem onClick={handleCloseProfileMenu}>Logout</MenuItem>
-          </Menu>
+          {isLoggedIn ? (
+            <>
+              <IconButton onClick={handleOpenProfileMenu} color="inherit">
+                <Avatar alt={user?.first_name} src="/static/images/avatar/1.jpg" />
+              </IconButton>
+              <Menu
+                anchorEl={anchorElProfile}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                open={Boolean(anchorElProfile)}
+                onClose={handleCloseProfileMenu}
+              >
+                <MenuItem onClick={handleCloseProfileMenu}>Profile</MenuItem>
+                <MenuItem onClick={handleCloseProfileMenu}>Settings</MenuItem>
+                <MenuItem onClick={handleCloseProfileMenu}>Logout</MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <>
+              <Link to="/login-student" className={styles.navButton}>
+                <Button color="inherit">Login</Button>
+              </Link>
+              <Link to="/register" className={styles.navButton}>
+                <Button color="inherit">Register</Button>
+              </Link>
+            </>
+          )}
         </Box>
 
       </Toolbar>
