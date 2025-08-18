@@ -16,7 +16,8 @@ import { useAuth } from "../../hooks/useAuth";
 const pages = [
   { name: 'Home', path: '/' },
   { name: 'Login', path: '/login-student' },
-  { name: 'Register', path: '/register' }
+  { name: 'Register', path: '/register' },
+  { name: 'Create Class', path: '/create-class' }
 ];
 
 export default function Header() {
@@ -111,6 +112,9 @@ export default function Header() {
               </Link>
               <Link to="/register" className={styles.navButton}>
                 <Button color="inherit">Register</Button>
+              </Link>
+              <Link to="/create-class" className={styles.navButton}>
+                <Button color="inherit">Create-Class</Button>
               </Link>
             </>
           )}
