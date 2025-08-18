@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Container, Typography, TextField, Button, Stack, Chip } from "@mui/material";
-import { createClass } from "../services/SaveClass";
+import { createClass } from "../../services/SaveClass";
 
 
 const MAX_NAME = 100;
