@@ -27,7 +27,6 @@ export function listClasses() {
 export function createClass({ name, description = "", tags = [] }) {
   const list = load();
 
-  // تحقق اختياري لاسم فريد (كما في الـ AC "إذا كان ينطبق")
   if (list.some((c) => c.name.trim().toLowerCase() === name.trim().toLowerCase())) {
     const err = new Error("Class name must be unique");
     err.code = "DUPLICATE_NAME";

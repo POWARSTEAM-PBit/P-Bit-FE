@@ -15,16 +15,33 @@ export default function CreateClass() {
     return null;
   }, [name]);
 
-  function handleSubmit(e) {
-    
-    e.preventDefault();
-    if (nameError) return; // يمنع الإرسال إذا في خطأ
-    // بنضيف الحفظ والرسالة في الخطوة الجاية
-    alert("Valid! (سنكمل الحفظ لاحقًا)");
-  }
   const [desc, setDesc] = useState("");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState([]);
+
+  function handleSubmit(e) {
+
+    e.preventDefault();
+    if (nameError) return; // Prevent submission if there is an error
+    
+
+    try {
+        const newClass = createClass({name, description: desc,tags});
+
+        alert(` New class successfully created! \nCode: ${newClass.code}`);
+        setName("");
+        setDesc("");
+        setTags([]);
+        setTagInput("");
+    } catch (err) {
+        if (err.code === "DUPLICATE_NAME") {
+          alert(" This class already exists, try another name");
+        } else {
+          alert(" Something went wrong, please try again");
+        }
+    }
+    
+  }
 
 function addTag() {
   const t = tagInput.trim();
@@ -40,7 +57,7 @@ function removeTag(t) {
     <Container sx={{ py: 4 }}>
       <Typography variant="h4" gutterBottom>Create Class</Typography>
 
-      <Stack component="form" onSubmit={handleSubmit} spacing={2} sx={{ maxWidth: 520 }}>
+      <Stack component="form" onSubmit={handleSubmitn} spacing={2} sx={{ maxWidth: 520 }}>
         <TextField
           label="Class name *"
           value={name}
