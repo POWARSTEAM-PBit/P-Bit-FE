@@ -57,7 +57,7 @@ function removeTag(t) {
     <Container sx={{ py: 4 }}>
       <Typography variant="h4" gutterBottom>Create Class</Typography>
 
-      <Stack component="form" onSubmit={handleSubmitn} spacing={2} sx={{ maxWidth: 520 }}>
+      <Stack component="form" onSubmit={handleSubmit} spacing={2} sx={{ maxWidth: 520 }}>
         <TextField
           label="Class name *"
           value={name}
