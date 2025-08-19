@@ -114,7 +114,7 @@ export default function Header() {
                 <Button color="inherit">Register</Button>
               </Link>
               <Link to="/create-class" className={styles.navButton}>
-                <Button color="inherit">Create Class</Button>
+                <Button color="inherit">Create-Class</Button>
               </Link>
             </>
           )}
