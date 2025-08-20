@@ -46,7 +46,9 @@ export default function CreateClass() {
         tag: tags,
       });
 
-      if (!res.success) {
+        console.log("Create class response:", res);
+
+      if (!res || !res.success) {
         setErrorMessage(`❌ ${res.message || "Registration failed. Please try again."}`);
         return;
       }
