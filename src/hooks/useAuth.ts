@@ -20,8 +20,8 @@ export interface User {
  * recieved from communicating with the backend API.
  */
 export interface LoginData {
-  api_key: string;
-  user: User;
+  access_token: string;
+  token_type: string;
 }
 
 /**
@@ -65,21 +65,31 @@ export function useAuth() {
    */
   const login = async (data: LoginInput): Promise<LoginResponse> => {
     try {
-      const response = await client.post<LoginResponse>("/user/login", data);
-      const res = response.data;
+      const params = new URLSearchParams();
+      params.append("username", data.user_id); // must be `username`
+      params.append("password", data.password);
 
-      if (res.success && res.data?.api_key) {
-        setKey(res.data.api_key);
-      }
+      const response = await client.post<LoginResponse>(
+        "/user/login",
+        params,
+        { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+      );
+
+      const res = response.data;
+      
+      if (res.success && res.data?.access_token) {
+        setKey(res.data.access_token);
+        console.log(res.data.access_token);
+  }
+
 
       return res;
     } catch (error: any) {
-      
       const message = error.response?.data?.message || error.message || "Unknown error occurred";
-
-      return {success: false, message} as LoginResponse;
+      return { success: false, message } as LoginResponse;
     }
-};
+  };
+
 
 
   /**

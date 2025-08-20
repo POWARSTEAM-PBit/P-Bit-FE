@@ -2,6 +2,7 @@ import { ApiResp } from "../api/int";
 import client from "../api/client";
 
 export interface CreateClassInput {
+  user_id: string;
   class_name: string;
   class_description: string;
   tag: string[];
@@ -10,9 +11,7 @@ export interface CreateClassInput {
 type CreateClassResponse = ApiResp<null>;
 
 export function useClass() {
-  const create_class = async (
-    data: CreateClassInput
-  ): Promise<CreateClassResponse> => {
+  const create_class = async ( data: CreateClassInput): Promise<CreateClassResponse> => {
     try {
       const response = await client.post<CreateClassResponse>(
         "/class/create",
