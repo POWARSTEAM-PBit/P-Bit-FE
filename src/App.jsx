@@ -4,7 +4,7 @@ import StudentLoginPage from './pages/StudentLoginPage';
 import TeacherLoginPage from './pages/TeacherLoginPage';
 import RegisterPage from "./pages/RegisterPage";
 import CreateClass from './components/Class/CreateClass';
-
+import TeacherDashboard from "./pages/TeacherDashboard"
 export default function App() {
   return (
     <>
@@ -14,6 +14,7 @@ export default function App() {
         <Route path="/login-teacher" element={<TeacherLoginPage />} />
         <Route path="/register" element={<RegisterPage />} /> 
         <Route path="/create-class" element={<CreateClass />} /> 
+        <Route path="/dashboard" element={<TeacherDashboard />} /> 
       </Routes>
     </>
   );
