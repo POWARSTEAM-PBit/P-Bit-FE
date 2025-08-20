@@ -3,7 +3,7 @@ import Header from './components/Header/Header';
 import StudentLoginPage from './pages/StudentLoginPage';
 import TeacherLoginPage from './pages/TeacherLoginPage';
 import RegisterPage from "./pages/RegisterPage";
-import CreateClass from './pages/CreateClass';
+import CreateClass from './components/Class/CreateClass';
 
 export default function App() {
   return (
