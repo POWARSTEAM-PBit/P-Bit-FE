@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Container, Typography } from "@mui/material";
+import { Button, Container, Typography, Stack } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 export default function TeacherDashboard() {
@@ -10,13 +10,24 @@ export default function TeacherDashboard() {
       <Typography variant="h4" gutterBottom>
         Teacher Dashboard
       </Typography>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => navigate("/create-class")}
-      >
-        Create Class
+
+      <Stack spacing={2} direction="row">
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate("/create-class")}
+        >
+          Create Class
       </Button>
-    </Container>
+
+      <Button
+        variant="outlined"
+        color="secondary"
+        onClick={() => navigate("/classes list")}
+      >
+        My Classes
+      </Button>
+    </Stack>
+  </Container>
   );
 }

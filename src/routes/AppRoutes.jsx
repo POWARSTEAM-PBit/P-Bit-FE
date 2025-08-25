@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import TeacherDashboard from "../pages/TeacherDashboard";
 import CreateClass from "../pages/CreateClass.jsx";
+import ClassList from "../pages/ClassList";
 
 export default function AppRoutes() {
   return (
@@ -15,6 +16,7 @@ export default function AppRoutes() {
         {/* The Pages */}
         <Route path="/dashboard" element={<TeacherDashboard />} />
         <Route path="/create-class" element={<CreateClass />} />
+        <Route path="/class-list" element={<ClassList />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
