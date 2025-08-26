@@ -3,19 +3,28 @@ import Header from './components/Header/Header';
 import StudentLoginPage from './pages/StudentLoginPage';
 import TeacherLoginPage from './pages/TeacherLoginPage';
 import RegisterPage from "./pages/RegisterPage";
-import CreateClass from './components/Class/CreateClass';
-import TeacherDashboard from "./pages/TeacherDashboard"
+import DashboardPage from './pages/DashboardPage';
+import CreateClassroomPage from './pages/CreateClassroomPage';
+import JoinClassroomPage from './pages/JoinClassroomPage';
+import ClassroomPage from './pages/ClassroomPage';
+import ProfilePage from './pages/ProfilePage';
+import { ClassroomProvider } from './contexts/ClassroomContext';
+
 export default function App() {
-  return (
-    <>
-      <Header />
-      <Routes>
-        <Route path="/login-student" element={<StudentLoginPage />} />
-        <Route path="/login-teacher" element={<TeacherLoginPage />} />
-        <Route path="/register" element={<RegisterPage />} /> 
-        <Route path="/create-class" element={<CreateClass />} /> 
-        <Route path="/dashboard" element={<TeacherDashboard />} /> 
-      </Routes>
-    </>
-  );
+    return (
+        <ClassroomProvider>
+            <Header />
+            <Routes>
+                <Route path="/" element={<DashboardPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/login-student" element={<StudentLoginPage />} />
+                <Route path="/login-teacher" element={<TeacherLoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/create-classroom" element={<CreateClassroomPage />} />
+                <Route path="/join-classroom" element={<JoinClassroomPage />} />
+                <Route path="/classroom/:classroomId" element={<ClassroomPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+            </Routes>
+        </ClassroomProvider>
+    );
 }

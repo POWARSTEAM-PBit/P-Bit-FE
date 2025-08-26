@@ -1,31 +1,81 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Alert,
+  CircularProgress,
+  Paper,
+  ToggleButtonGroup,
+  ToggleButton
+} from '@mui/material';
+import { School, Group, PersonAdd } from '@mui/icons-material';
 import { useAuth } from "../../../hooks/useAuth";
-import "./RegisterForm.css";
+import styles from "./RegisterForm.module.css";
 
 /**
  * @brief User register form.
  * @returns 
  */
 export default function RegisterForm() {
-  const [isTeacher, setIsTeacher] = useState(false);
+  const [userType, setUserType] = useState("student");
   const [userId, setUserId] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState(""); // ✅ NEW
+  const [errorMessage, setErrorMessage] = useState("");
+  const [errors, setErrors] = useState({});
 
-  const { register } = useAuth();
+  const { register, loading } = useAuth();
   const navigate = useNavigate();
 
-  const userType = isTeacher ? "teacher" : "student";
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
+    
+    if (!lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
+    }
+    
+    if (!userId.trim()) {
+      newErrors.userId = `${userType === 'teacher' ? 'Email' : 'Username'} is required`;
+    } else if (userType === 'teacher' && !userId.includes('@')) {
+      newErrors.userId = 'Please enter a valid email address';
+    }
+    
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccessMessage("");
-    setErrorMessage(""); // ✅ clear any previous error
+    setErrorMessage("");
+    setErrors({});
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       const res = await register({
@@ -37,7 +87,7 @@ export default function RegisterForm() {
       });
 
       if (!res.success) {
-        setErrorMessage(`❌ ${res.message || "Registration failed. Please try again."}`);
+        setErrorMessage(res.message || "Registration failed. Please try again.");
         return;
       }
 
@@ -46,6 +96,7 @@ export default function RegisterForm() {
       // Clear form fields
       setUserId("");
       setPassword("");
+      setConfirmPassword("");
       setFirstName("");
       setLastName("");
 
@@ -55,88 +106,154 @@ export default function RegisterForm() {
       }, 1500);
     } catch (err) {
       console.error(err);
-      setErrorMessage("❌ An unexpected error occurred during registration.");
+      setErrorMessage("An unexpected error occurred during registration.");
     }
   };
 
   return (
-    <div className="container">
-      <form onSubmit={handleSubmit} className="form">
-        <h2 className="title">POWARSTEAM P-Bit Register</h2>
+    <Box className={styles.container}>
+      <Paper elevation={3} className={styles.paper}>
+        <Card className={styles.card}>
+          <CardContent className={styles.cardContent}>
+            <Box className={styles.header}>
+              <PersonAdd className={styles.icon} />
+              <Typography variant="h4" component="h1" className={styles.title}>
+                Create Account
+              </Typography>
+            </Box>
 
-        {/* ✅ Error Message */}
-        {errorMessage && <p className="error-message">{errorMessage}</p>}
+            {errorMessage && (
+              <Alert severity="error" className={styles.alert}>
+                {errorMessage}
+              </Alert>
+            )}
 
-        {/* ✅ Success Message */}
-        {successMessage && <p className="success-message">{successMessage}</p>}
+            {successMessage && (
+              <Alert severity="success" className={styles.alert}>
+                {successMessage}
+              </Alert>
+            )}
 
-        <div style={{ textAlign: "center", marginBottom: "20px" }}>
-          <label style={{ fontWeight: "600", color: "#5c5470" }}>
-            <input
-              type="checkbox"
-              checked={isTeacher}
-              onChange={(e) => setIsTeacher(e.target.checked)}
-              style={{ marginRight: "8px" }}
-            />
-            Registering as a {isTeacher ? "Teacher" : "Student"}
-          </label>
-        </div>
+            <form onSubmit={handleSubmit} className={styles.form}>
+              {/* User Type Toggle */}
+              <Box className={styles.userTypeSection}>
+                <Typography variant="h6" className={styles.userTypeTitle}>
+                  I am registering as:
+                </Typography>
+                <ToggleButtonGroup
+                  value={userType}
+                  exclusive
+                  onChange={(e, newValue) => {
+                    if (newValue !== null) {
+                      setUserType(newValue);
+                      setUserId(""); // Clear user ID when switching types
+                    }
+                  }}
+                  className={styles.toggleGroup}
+                >
+                  <ToggleButton value="student" className={styles.toggleButton}>
+                    <Group className={styles.toggleIcon} />
+                    <Typography>Student</Typography>
+                  </ToggleButton>
+                  <ToggleButton value="teacher" className={styles.toggleButton}>
+                    <School className={styles.toggleIcon} />
+                    <Typography>Teacher</Typography>
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
 
-        <label className="label" htmlFor="firstName">First Name:</label>
-        <input
-          id="firstName"
-          type="text"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          required
-          className="input"
-          placeholder="Enter your first name"
-        />
+              <TextField
+                fullWidth
+                label="First Name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                error={!!errors.firstName}
+                helperText={errors.firstName}
+                className={styles.textField}
+                placeholder="Enter your first name"
+                required
+              />
 
-        <label className="label" htmlFor="lastName">Last Name:</label>
-        <input
-          id="lastName"
-          type="text"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          required
-          className="input"
-          placeholder="Enter your last name"
-        />
+              <TextField
+                fullWidth
+                label="Last Name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                error={!!errors.lastName}
+                helperText={errors.lastName}
+                className={styles.textField}
+                placeholder="Enter your last name"
+                required
+              />
 
-        <label className="label" htmlFor="userId">
-          {isTeacher ? "Email:" : "Username:"}
-        </label>
-        <input
-          id="userId"
-          type={isTeacher ? "email" : "text"}
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          required
-          className="input"
-          placeholder={isTeacher ? "you@example.com" : "Enter your username"}
-        />
+              <TextField
+                fullWidth
+                label={userType === "teacher" ? "Email Address" : "Username"}
+                type={userType === "teacher" ? "email" : "text"}
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                error={!!errors.userId}
+                helperText={errors.userId}
+                className={styles.textField}
+                placeholder={userType === "teacher" ? "you@example.com" : "Enter your username"}
+                required
+              />
 
-        <label className="label" htmlFor="password">Password:</label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="input"
-          placeholder="Create a password"
-        />
+              <TextField
+                fullWidth
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={!!errors.password}
+                helperText={errors.password}
+                className={styles.textField}
+                placeholder="Create a password (min 6 characters)"
+                required
+              />
 
-        <button type="submit" className="button">Register</button>
+              <TextField
+                fullWidth
+                label="Confirm Password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                error={!!errors.confirmPassword}
+                helperText={errors.confirmPassword}
+                className={styles.textField}
+                placeholder="Confirm your password"
+                required
+              />
 
-        <p className="login-link">
-          Already have an account?{" "}
-          <Link to={isTeacher ? "/login-teacher" : "/login-student"} className="link">
-            Login here
-          </Link>
-        </p>
-      </form>
-    </div>
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                fullWidth
+                disabled={loading}
+                className={styles.submitButton}
+                startIcon={loading ? <CircularProgress size={20} /> : <PersonAdd />}
+              >
+                {loading ? 'Creating Account...' : 'Create Account'}
+              </Button>
+            </form>
+
+            <Box className={styles.loginPrompt}>
+              <Typography variant="body2" color="textSecondary">
+                Already have an account?{" "}
+              </Typography>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => navigate(userType === "teacher" ? "/login-teacher" : "/login-student")}
+                className={styles.loginLink}
+              >
+                Login here
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Paper>
+    </Box>
   );
 }

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -24,7 +24,19 @@ export default function Header() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElProfile, setAnchorElProfile] = React.useState(null);
 
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Force re-render when auth state changes
+  const userRole = user?.role || user?.user_type;
+
+  const pages = [
+    { name: 'Dashboard', path: '/dashboard' },
+    { name: 'Create Classroom', path: '/create-classroom', show: isLoggedIn && userRole === 'teacher' },
+    { name: 'Join Classroom', path: '/join-classroom' },
+    { name: 'Login', path: '/login-student', show: !isLoggedIn },
+    { name: 'Register', path: '/register', show: !isLoggedIn }
+  ].filter(page => page.show !== false);
 
   const handleOpenNavMenu = (e) => setAnchorElNav(e.currentTarget);
   const handleCloseNavMenu = () => setAnchorElNav(null);
@@ -91,7 +103,7 @@ export default function Header() {
           {isLoggedIn ? (
             <>
               <IconButton onClick={handleOpenProfileMenu} color="inherit">
-                <Avatar alt={user?.first_name} src="/static/images/avatar/1.jpg" />
+                <Avatar alt={user?.first_name || user?.name} src="/static/images/avatar/1.jpg" />
               </IconButton>
               <Menu
                 anchorEl={anchorElProfile}
@@ -100,9 +112,9 @@ export default function Header() {
                 open={Boolean(anchorElProfile)}
                 onClose={handleCloseProfileMenu}
               >
-                <MenuItem onClick={handleCloseProfileMenu}>Profile</MenuItem>
+                <MenuItem onClick={() => { handleCloseProfileMenu(); navigate('/profile'); }}>Profile</MenuItem>
                 <MenuItem onClick={handleCloseProfileMenu}>Settings</MenuItem>
-                <MenuItem onClick={handleCloseProfileMenu}>Logout</MenuItem>
+                <MenuItem onClick={() => { handleCloseProfileMenu(); logout(); }}>Logout</MenuItem>
               </Menu>
             </>
           ) : (
@@ -112,9 +124,6 @@ export default function Header() {
               </Link>
               <Link to="/register" className={styles.navButton}>
                 <Button color="inherit">Register</Button>
-              </Link>
-              <Link to="/create-class" className={styles.navButton}>
-                <Button color="inherit">Create-Class</Button>
               </Link>
             </>
           )}
