@@ -56,9 +56,7 @@ setClasses(sorted);
                 <Typography>Students: {cls.enrolled_students}</Typography>
               </CardContent>
             </Card>
-            {/*end of card */}
-
-          ))}
+          ))} {/*end of card */}
         </Stack>
       )}
     </Container>
