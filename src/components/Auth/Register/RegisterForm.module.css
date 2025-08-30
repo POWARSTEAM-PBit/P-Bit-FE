@@ -1,0 +1,192 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 64px);
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.paper {
+  width: 100%;
+  max-width: 600px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.card {
+  border: none;
+  box-shadow: none;
+}
+
+.cardContent {
+  padding: 3rem 2rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.icon {
+  font-size: 2.5rem !important;
+  color: #667eea;
+}
+
+.title {
+  color: #2c3e50;
+  font-weight: 600 !important;
+  text-align: center;
+}
+
+.alert {
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* User Type Toggle Section */
+.userTypeSection {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.userTypeTitle {
+  color: #2c3e50;
+  font-weight: 600 !important;
+  margin-bottom: 1rem !important;
+}
+
+.toggleGroup {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.toggleButton {
+  flex: 1;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease;
+}
+
+.toggleButton.Mui-selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.toggleButton:hover {
+  transform: translateY(-1px);
+}
+
+.toggleIcon {
+  margin-right: 8px;
+  font-size: 1.2rem !important;
+}
+
+.textField {
+  margin-bottom: 0.5rem;
+}
+
+.textField .MuiOutlinedInput-root {
+  border-radius: 8px;
+}
+
+.textField .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #667eea;
+}
+
+.textField .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #667eea;
+}
+
+.submitButton {
+  margin-top: 1rem;
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  font-weight: 600;
+  text-transform: none;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.submitButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.submitButton:disabled {
+  transform: none;
+  box-shadow: none;
+}
+
+.loginPrompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #ecf0f1;
+}
+
+.loginLink {
+  color: #667eea !important;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.loginLink:hover {
+  background-color: rgba(102, 126, 234, 0.1) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .cardContent {
+    padding: 2rem 1.5rem;
+  }
+  
+  .title {
+    font-size: 1.75rem !important;
+  }
+  
+  .icon {
+    font-size: 2rem !important;
+  }
+  
+  .toggleButton {
+    padding: 10px 16px !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .toggleIcon {
+    font-size: 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .toggleGroup {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .toggleButton {
+    width: 100%;
+  }
+}

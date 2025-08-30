@@ -1,13 +1,25 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Alert,
+  CircularProgress,
+  Paper
+} from '@mui/material';
+import { Login, School, Group } from '@mui/icons-material';
 import { useAuth } from "../../../hooks/useAuth";
-import "./LoginForm.css";
+import styles from "./LoginForm.module.css";
 
 export default function LoginForm({ mode }) {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const { login } = useAuth();
+  const { login, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -22,68 +34,101 @@ export default function LoginForm({ mode }) {
       });
 
       if (!res.success) {
-        // ✅ Display backend-provided message
-        setErrorMessage(`❌ ${res.message || "Login failed. Please try again."}`);
+        setErrorMessage(res.message || "Login failed. Please try again.");
         return;
       }
 
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      setErrorMessage("❌ An unexpected error occurred during login.");
+      setErrorMessage("An unexpected error occurred during login.");
     }
   };
 
   return (
-    <div className="container">
-      <form onSubmit={handleSubmit} className="form">
-        <h2 className="title">POWARSTEAM P-Bit Login</h2>
+    <Box className={styles.container}>
+      <Paper elevation={3} className={styles.paper}>
+        <Card className={styles.card}>
+          <CardContent className={styles.cardContent}>
+            <Box className={styles.header}>
+              {mode === "teacher" ? <School className={styles.icon} /> : <Group className={styles.icon} />}
+              <Typography variant="h4" component="h1" className={styles.title}>
+                {mode === "teacher" ? "Teacher" : "Student"} Login
+              </Typography>
+            </Box>
 
-        {/* ✅ Error Message Display */}
-        {errorMessage && (
-          <p className="error-message">{errorMessage}</p>
-        )}
+            {errorMessage && (
+              <Alert severity="error" className={styles.alert}>
+                {errorMessage}
+              </Alert>
+            )}
 
-        <label className="label" htmlFor="userId">
-          {mode === "student" ? "Username:" : "Email:"}
-        </label>
-        <input
-          id="userId"
-          type={mode === "student" ? "text" : "email"}
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          required
-          className="input"
-          placeholder={mode === "student" ? "Enter your username" : "you@example.com"}
-        />
+            <form onSubmit={handleSubmit} className={styles.form}>
+              <TextField
+                fullWidth
+                label={mode === "student" ? "Username" : "Email Address"}
+                type={mode === "student" ? "text" : "email"}
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                className={styles.textField}
+                placeholder={mode === "student" ? "Enter your username" : "you@example.com"}
+                required
+              />
 
-        <label className="label" htmlFor="password">Password:</label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="input"
-          placeholder="Enter your password"
-        />
+              <TextField
+                fullWidth
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={styles.textField}
+                placeholder="Enter your password"
+                required
+              />
 
-        <button type="submit" className="button">Login</button>
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                fullWidth
+                disabled={loading}
+                className={styles.submitButton}
+                startIcon={loading ? <CircularProgress size={20} /> : <Login />}
+              >
+                {loading ? 'Logging in...' : 'Login'}
+              </Button>
+            </form>
 
-        {mode === "student" ? (
-          <p className="login-link">
-            Are you a teacher? <Link to="/login-teacher" className="link">Login here</Link>
-          </p>
-        ) : (
-          <p className="login-link">
-            Are you a student? <Link to="/login-student" className="link">Login here</Link>
-          </p>
-        )}
+            <Box className={styles.switchPrompt}>
+              <Typography variant="body2" color="textSecondary">
+                {mode === "student" ? "Are you a teacher?" : "Are you a student?"}{" "}
+              </Typography>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => navigate(mode === "student" ? "/login-teacher" : "/login-student")}
+                className={styles.switchLink}
+              >
+                Login here
+              </Button>
+            </Box>
 
-        <p className="register-link">
-          Don't have an account? <Link to="/register" className="link">Register here</Link>
-        </p>
-      </form>
-    </div>
+            <Box className={styles.registerPrompt}>
+              <Typography variant="body2" color="textSecondary">
+                Don't have an account?{" "}
+              </Typography>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => navigate("/register")}
+                className={styles.registerLink}
+              >
+                Register here
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Paper>
+    </Box>
   );
 }

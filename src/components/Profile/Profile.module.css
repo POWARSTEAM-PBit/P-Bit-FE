@@ -1,0 +1,210 @@
+.container {
+  min-height: calc(100vh - 64px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 2rem 0;
+}
+
+.content {
+  padding: 0 1rem;
+}
+
+/* Header Styles */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.backButton {
+  border-radius: 8px;
+  text-transform: none;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.title {
+  color: #2c3e50;
+  font-weight: 700 !important;
+  flex: 1;
+}
+
+/* Profile Card */
+.profileCard {
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  background: white;
+  height: fit-content;
+}
+
+.profileHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar {
+  width: 80px !important;
+  height: 80px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  font-size: 2rem !important;
+}
+
+.userName {
+  color: #2c3e50;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+.roleChip {
+  font-weight: 500;
+}
+
+/* Details Card */
+.detailsCard {
+  border-radius: 12px;
+  padding: 2rem;
+  background: white;
+}
+
+.sectionTitle {
+  color: #2c3e50;
+  font-weight: 600 !important;
+  margin-bottom: 1rem !important;
+}
+
+.divider {
+  margin: 1.5rem 0;
+  border-color: #ecf0f1;
+}
+
+/* Info Grid */
+.infoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.infoItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.infoLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.infoIcon {
+  font-size: 1.2rem !important;
+  color: #667eea;
+}
+
+.infoValue {
+  font-weight: 500 !important;
+  color: #2c3e50;
+  text-align: right;
+  flex: 1;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.logoutButton {
+  border-radius: 8px;
+  text-transform: none;
+  font-weight: 500;
+}
+
+/* Error States */
+.errorPaper {
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: white;
+}
+
+.errorTitle {
+  color: #2c3e50;
+  font-weight: 600 !important;
+  margin-bottom: 1rem !important;
+}
+
+.errorText {
+  color: #7f8c8d;
+  margin-bottom: 2rem !important;
+}
+
+.loginButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  border-radius: 8px;
+  text-transform: none;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem 0;
+  }
+  
+  .content {
+    padding: 0 0.5rem;
+  }
+  
+  .header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .title {
+    font-size: 2rem !important;
+  }
+  
+  .profileCard,
+  .detailsCard {
+    padding: 1.5rem;
+  }
+  
+  .avatar {
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 1.5rem !important;
+  }
+  
+  .infoItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .infoValue {
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .actions {
+    justify-content: center;
+  }
+  
+  .logoutButton {
+    width: 100%;
+  }
+}

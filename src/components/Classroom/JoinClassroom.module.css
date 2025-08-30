@@ -1,0 +1,310 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 64px);
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.paper {
+  width: 100%;
+  max-width: 500px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.card {
+  border: none;
+  box-shadow: none;
+}
+
+.cardContent {
+  padding: 3rem 2rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.icon {
+  font-size: 2.5rem !important;
+  color: #667eea;
+}
+
+.title {
+  color: #2c3e50;
+  font-weight: 600 !important;
+  text-align: center;
+}
+
+.subtitle {
+  text-align: center;
+  color: #7f8c8d;
+  margin-bottom: 2rem !important;
+}
+
+.alert {
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.textField {
+  margin-bottom: 0.5rem;
+}
+
+.textField .MuiOutlinedInput-root {
+  border-radius: 8px;
+}
+
+.textField .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #667eea;
+}
+
+.textField .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #667eea;
+}
+
+.submitButton {
+  margin-top: 1rem;
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  font-weight: 600;
+  text-transform: none;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.submitButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.submitButton:disabled {
+  transform: none;
+  box-shadow: none;
+}
+
+.loginPrompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #ecf0f1;
+}
+
+.loginLink {
+  color: #667eea !important;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.loginLink:hover {
+  background-color: rgba(102, 126, 234, 0.1) !important;
+}
+
+/* Dialog Styles */
+.dialog .MuiDialog-paper {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.dialogTitle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 2rem 1rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.dialogIcon {
+  font-size: 1.5rem !important;
+}
+
+.dialogContent {
+  padding: 2rem;
+}
+
+.dialogText {
+  margin-bottom: 1.5rem !important;
+  color: #7f8c8d;
+}
+
+/* Join Methods */
+.joinMethods {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.joinMethodCard {
+  cursor: pointer;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.joinMethodCard:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+}
+
+.selectedCard {
+  border-color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+}
+
+.joinMethodContent {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.joinMethodHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.joinMethodIcon {
+  font-size: 2rem !important;
+  color: #667eea;
+}
+
+.methodChip {
+  margin-top: 0.5rem;
+}
+
+/* Anonymous Form */
+.anonymousForm {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.formTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem !important;
+  color: #495057;
+}
+
+.formIcon {
+  color: #667eea;
+}
+
+.formTextField {
+  margin-bottom: 1rem;
+}
+
+.formTextField .MuiOutlinedInput-root {
+  border-radius: 8px;
+}
+
+.formTextField .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #667eea;
+}
+
+.formTextField .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #667eea;
+}
+
+.dialogTextField {
+  margin-bottom: 0.5rem;
+}
+
+.dialogTextField .MuiOutlinedInput-root {
+  border-radius: 8px;
+}
+
+.dialogTextField .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #667eea;
+}
+
+.dialogTextField .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #667eea;
+}
+
+.dialogActions {
+  padding: 1rem 2rem 2rem 2rem;
+  gap: 1rem;
+}
+
+.dialogActions .MuiButton-root {
+  border-radius: 8px;
+  text-transform: none;
+  font-weight: 500;
+}
+
+.dialogActions .MuiButton-contained {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .cardContent {
+    padding: 2rem 1.5rem;
+  }
+  
+  .title {
+    font-size: 1.75rem !important;
+  }
+  
+  .icon {
+    font-size: 2rem !important;
+  }
+  
+  .dialogTitle {
+    padding: 1rem 1.5rem 0.5rem 1.5rem;
+  }
+  
+  .dialogContent {
+    padding: 1.5rem;
+  }
+  
+  .dialogActions {
+    padding: 0.5rem 1.5rem 1.5rem 1.5rem;
+  }
+  
+  .joinMethods {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .joinMethodContent {
+    padding: 1rem;
+  }
+  
+  .joinMethodIcon {
+    font-size: 1.5rem !important;
+  }
+  
+  .anonymousForm {
+    padding: 1rem;
+  }
+}
