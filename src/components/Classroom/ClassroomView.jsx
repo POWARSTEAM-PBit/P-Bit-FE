@@ -23,7 +23,7 @@ import { useClassroom } from '../../contexts/ClassroomContext';
 import { useAuth } from '../../hooks/useAuth';
 import styles from './ClassroomView.module.css';
 
-import { fetchClassMembers } from '../../api/classMembers';
+//import { fetchClassMembers } from '../../api/classMembers';
 
 export default function ClassroomView() {
   const { classroomId } = useParams();
