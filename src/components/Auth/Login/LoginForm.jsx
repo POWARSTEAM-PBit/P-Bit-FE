@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Card,
@@ -9,9 +9,9 @@ import {
   Typography,
   Alert,
   CircularProgress,
-  Paper
-} from '@mui/material';
-import { Login, School, Group } from '@mui/icons-material';
+  Paper,
+} from "@mui/material";
+import { Login, School, Group } from "@mui/icons-material";
 import { useAuth } from "../../../hooks/useAuth";
 import styles from "./LoginForm.module.css";
 
@@ -45,15 +45,21 @@ export default function LoginForm({ mode }) {
     }
   };
 
+  const isStudent = mode === "student";
+
   return (
     <Box className={styles.container}>
-      <Paper elevation={3} className={styles.paper}>
+      <Paper elevation={0} className={styles.paper}>
         <Card className={styles.card}>
           <CardContent className={styles.cardContent}>
             <Box className={styles.header}>
-              {mode === "teacher" ? <School className={styles.icon} /> : <Group className={styles.icon} />}
-              <Typography variant="h4" component="h1" className={styles.title}>
-                {mode === "teacher" ? "Teacher" : "Student"} Login
+              {isStudent ? (
+                <Group className={styles.icon} />
+              ) : (
+                <School className={styles.icon} />
+              )}
+              <Typography variant="h5" component="h1" className={styles.title}>
+                {isStudent ? "Student" : "Teacher"} Login
               </Typography>
             </Box>
 
@@ -66,64 +72,69 @@ export default function LoginForm({ mode }) {
             <form onSubmit={handleSubmit} className={styles.form}>
               <TextField
                 fullWidth
-                label={mode === "student" ? "Username" : "Email Address"}
-                type={mode === "student" ? "text" : "email"}
+                size="small"
+                margin="dense"
+                label={isStudent ? "Username" : "Email Address"}
+                type={isStudent ? "text" : "email"}
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
                 className={styles.textField}
-                placeholder={mode === "student" ? "Enter your username" : "you@example.com"}
+                placeholder={isStudent ? "Enter your username" : "you@example.com"}
+                autoComplete={isStudent ? "username" : "email"}
                 required
               />
 
               <TextField
                 fullWidth
+                size="small"
+                margin="dense"
                 label="Password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={styles.textField}
                 placeholder="Enter your password"
+                autoComplete="current-password"
                 required
               />
 
               <Button
                 type="submit"
                 variant="contained"
-                size="large"
                 fullWidth
                 disabled={loading}
                 className={styles.submitButton}
-                startIcon={loading ? <CircularProgress size={20} /> : <Login />}
+                startIcon={!loading ? <Login /> : null}
               >
-                {loading ? 'Logging in...' : 'Login'}
+                {loading ? <CircularProgress size={20} /> : "Log in"}
               </Button>
             </form>
 
-            <Box className={styles.switchPrompt}>
-              <Typography variant="body2" color="textSecondary">
-                {mode === "student" ? "Are you a teacher?" : "Are you a student?"}{" "}
+            <Box className={styles.registerPrompt}>
+              <Typography variant="body2" color="text.secondary">
+                {isStudent ? "Are you a teacher?" : "Are you a student?"}
               </Typography>
               <Button
                 variant="text"
                 size="small"
-                onClick={() => navigate(mode === "student" ? "/login-teacher" : "/login-student")}
-                className={styles.switchLink}
+                onClick={() => navigate(isStudent ? "/login-teacher" : "/login-student")}
+                className={styles.link}
               >
                 Login here
               </Button>
             </Box>
 
             <Box className={styles.registerPrompt}>
-              <Typography variant="body2" color="textSecondary">
-                Don't have an account?{" "}
+              <Typography variant="body2" color="text.secondary">
+                Don’t have an account?
               </Typography>
               <Button
                 variant="text"
                 size="small"
                 onClick={() => navigate("/register")}
-                className={styles.registerLink}
+                className={styles.link}
               >
-                Register here
+                Create one
               </Button>
             </Box>
           </CardContent>

@@ -12,7 +12,7 @@
     padding: 48px 42px; /* Increased padding */
     border-radius: 12px;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-    width: 550px; /* Increased width */
+    width: 380px; /* Increased width */
     display: flex;
     flex-direction: column;
     transition: transform 0.3s ease;
