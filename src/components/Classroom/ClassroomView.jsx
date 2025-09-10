@@ -23,7 +23,7 @@ import { useClassroom } from '../../contexts/ClassroomContext';
 import { useAuth } from '../../hooks/useAuth';
 import styles from './ClassroomView.module.css';
 
-//import { fetchClassMembers } from '../../api/classMembers';
+import { fetchClassMembers } from '../../api/classMembers';
 
 export default function ClassroomView() {
   const { classroomId } = useParams();
@@ -140,7 +140,7 @@ export default function ClassroomView() {
     const dir = order === 'asc' ? 1 : -1;
     return [...members].sort((a, b) => {
       if (sortBy === 'full_name') return a.full_name.localeCompare(b.full_name) * dir;
-      if (sortBy === 'username') return a.username.localeCompare(b.username) * dir;
+      if (sortBy === 'user_id') return a.username.localeCompare(b.username) * dir;
       const ta = a.join_date ? new Date(a.join_date).getTime() : 0;
       const tb = b.join_date ? new Date(b.join_date).getTime() : 0;
       return (ta - tb) * dir;
@@ -267,7 +267,7 @@ export default function ClassroomView() {
 
             <Box className={styles.infoItem}>
               <Typography variant="subtitle2" color="textSecondary">
-                Joined
+                Created
               </Typography>
               <Typography variant="h6" className={styles.infoValue}>
                 {formatDate(classroomData.joined_at)}
@@ -297,8 +297,7 @@ export default function ClassroomView() {
             <Box display="flex" alignItems="center" gap={8}>
               <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6 }}>
                 <option value="joined_at">Join date</option>
-                <option value="full_name">Full name</option>
-                <option value="username">Username</option>
+                <option value="user_id">Username</option>
               </select>
               <select value={order} onChange={(e) => setOrder(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6 }}>
                 <option value="asc">Asc</option>
