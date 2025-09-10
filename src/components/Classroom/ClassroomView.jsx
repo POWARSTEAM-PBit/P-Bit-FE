@@ -16,80 +16,117 @@ import {
   TableCell,
   TableRow,
   TableContainer,
+  TextField,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import { ArrowBack, School, Group } from '@mui/icons-material';
+import EditIcon from '@mui/icons-material/Edit';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { useClassroom } from '../../contexts/ClassroomContext';
 import { useAuth } from '../../hooks/useAuth';
+import client from '../../api/client';
 import styles from './ClassroomView.module.css';
 
-//import { fetchClassMembers } from '../../api/classMembers';
+// NOTE: we implement fetchClassMembers locally via client.get
 
 export default function ClassroomView() {
   const { classroomId } = useParams();
   const navigate = useNavigate();
 
-  // Bring in classroom context pieces
-  const { currentClassroom, classrooms, fetchClassrooms, loading, error } = useClassroom();
-  const { isLoggedIn } = useAuth();
+  // classroom context
+  const { currentClassroom, classrooms, loading, error, renameClassroom } = useClassroom();
+  const { isLoggedIn, user } = useAuth();
 
   const [classroomData, setClassroomData] = useState(null);
 
-  // Members state
+  // members state
   const [memberLoading, setMemberLoading] = useState(false);
   const [memberError, setMemberError] = useState('');
   const [members, setMembers] = useState([]);
 
-  // Sorting state
+  // sorting state
   const [sortBy, setSortBy] = useState('joined_at');
   const [order, setOrder] = useState('asc');
 
-  // Normalize route id once
+  // rename state (teacher only)
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [pendingName, setPendingName] = useState('');
+
+  // normalize route id once
   const wantedId = useMemo(() => String(classroomId ?? ''), [classroomId]);
 
-  // Helper to normalize a classroom object's id field
+  // helper to normalize a classroom object's id field
   const normId = (c) =>
     c?.id != null ? String(c.id) : c?.class_id != null ? String(c.class_id) : '';
 
-  // Make sure we only call fetchClassrooms() once as a fallback
+  // make sure we only run remote fallback once
   const hasFetchedRef = useRef(false);
 
-  // Resolve classroom data:
-  // 1) prefer currentClassroom (if matches)
-  // 2) else find in classrooms list
-  // 3) else fetch list once and try again
+  // resolve classroom data from context or remote fallback
   useEffect(() => {
     if (!wantedId) {
       setClassroomData(null);
       return;
     }
 
-    // 1) currentClassroom
+    // prefer currentClassroom if matches
     if (currentClassroom && normId(currentClassroom) === wantedId) {
       setClassroomData(currentClassroom);
+      setPendingName(currentClassroom?.name || '');
       return;
     }
 
-    // 2) search in classrooms list
+    // else find in classrooms list
     const found = (classrooms || []).find((c) => normId(c) === wantedId);
     if (found) {
       setClassroomData(found);
+      setPendingName(found?.name || '');
       return;
     }
 
-    // 3) fetch once if possible
+    // fallback: fetch owned/enrolled once and pick the one we need
     let cancelled = false;
     (async () => {
-      if (hasFetchedRef.current || typeof fetchClassrooms !== 'function') {
+      if (hasFetchedRef.current || !isLoggedIn) {
         if (!cancelled) setClassroomData(null);
         return;
       }
       try {
         hasFetchedRef.current = true;
-        const list = (await fetchClassrooms()) || [];
-        if (cancelled) return;
-        const f2 = list.find((c) => normId(c) === wantedId);
-        setClassroomData(f2 || null);
+        // choose endpoint by user role
+        const endpoint =
+          (user?.user_type || user?.userType || '').toString().toLowerCase() === 'teacher'
+            ? '/class/owned'
+            : '/class/enrolled';
+        const resp = await client.get(endpoint);
+        const list = resp?.data?.data || [];
+        const f2 = list.find((c) => String(c.id) === wantedId);
+        if (!cancelled) {
+          if (f2) {
+            // minimal transform to FE shape used here
+            const transformed = {
+              id: f2.id,
+              name: f2.name,
+              subject: f2.subject,
+              description: f2.description,
+              code: f2.passphrase,
+              user_role:
+                (user?.user_type || user?.userType || '').toString().toLowerCase() === 'teacher'
+                  ? 'teacher'
+                  : 'student',
+              joined_at: f2.joined_at || f2.created_at,
+              member_count: f2.member_count,
+              owner_name: f2.owner_name,
+            };
+            setClassroomData(transformed);
+            setPendingName(transformed?.name || '');
+          } else {
+            setClassroomData(null);
+          }
+        }
       } catch {
         if (!cancelled) setClassroomData(null);
       }
@@ -98,9 +135,9 @@ export default function ClassroomView() {
     return () => {
       cancelled = true;
     };
-  }, [wantedId, currentClassroom, classrooms, fetchClassrooms]);
+  }, [wantedId, currentClassroom, classrooms, isLoggedIn, user]);
 
-  // Fetch class members from backend (with cleanup to avoid setting state after unmount)
+  // load members via backend
   useEffect(() => {
     if (!wantedId) return;
 
@@ -110,10 +147,14 @@ export default function ClassroomView() {
       setMemberLoading(true);
       setMemberError('');
       try {
-        const list = await fetchClassMembers(wantedId, { sort_by: sortBy, order });
+        // call GET /class/{id}/members with sort params
+        const resp = await client.get(`/class/${wantedId}/members`, {
+          params: { sort_by: sortBy, order },
+        });
+        const ok = resp?.data?.success;
+        const list = ok ? resp?.data?.data : [];
         if (cancelled) return;
 
-        // Map API response to required fields
         const mapped = (list || []).map((u) => ({
           full_name: `${(u.first_name || '').trim()} ${(u.last_name || '').trim()}`.trim() || u.user_id,
           username: u.user_id,
@@ -135,17 +176,15 @@ export default function ClassroomView() {
     };
   }, [wantedId, sortBy, order]);
 
-  // Local sorting (kept even though server can sort; useful if backend ignores params)
-  const sortedMembers = useMemo(() => {
-    const dir = order === 'asc' ? 1 : -1;
-    return [...members].sort((a, b) => {
-      if (sortBy === 'full_name') return a.full_name.localeCompare(b.full_name) * dir;
-      if (sortBy === 'username') return a.username.localeCompare(b.username) * dir;
-      const ta = a.join_date ? new Date(a.join_date).getTime() : 0;
-      const tb = b.join_date ? new Date(b.join_date).getTime() : 0;
-      return (ta - tb) * dir;
-    });
-  }, [members, sortBy, order]);
+  // keep pendingName in sync if classroom changes
+  useEffect(() => {
+    setPendingName(classroomData?.name || '');
+  }, [classroomData?.name]);
+
+  // role check for rename button
+  const userType = (user?.user_type || user?.userType || '').toString().toLowerCase();
+  const canEdit =
+    userType === 'teacher' || (classroomData?.user_role || '').toString().toLowerCase() === 'teacher';
 
   const formatDate = (dateString) => {
     if (!dateString) return '—';
@@ -154,7 +193,7 @@ export default function ClassroomView() {
     return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  // Global loading/errors from context
+  // global loading/errors from context
   if (loading) {
     return (
       <Box className={styles.loadingContainer}>
@@ -164,7 +203,7 @@ export default function ClassroomView() {
         </Typography>
       </Box>
     );
-  }
+    }
 
   if (error) {
     return (
@@ -217,9 +256,69 @@ export default function ClassroomView() {
           </Button>
 
           <Box className={styles.headerInfo}>
-            <Typography variant="h4" component="h1" className={styles.title}>
-              {classroomData.name}
-            </Typography>
+            {/* Title with rename controls (teacher only) */}
+            <Box display="flex" alignItems="center" gap={1}>
+              {!isEditingName ? (
+                <>
+                  <Typography variant="h4" component="h1" className={styles.title}>
+                    {classroomData.name}
+                  </Typography>
+                  {canEdit && (
+                    <Tooltip title="Rename class">
+                      <IconButton
+                        size="small"
+                        onClick={() => setIsEditingName(true)}
+                        aria-label="edit class name"
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </>
+              ) : (
+                <>
+                  <TextField
+                    size="small"
+                    value={pendingName}
+                    onChange={(e) => setPendingName(e.target.value)}
+                    inputProps={{ maxLength: 100 }}
+                    autoFocus
+                  />
+                  <Tooltip title="Save">
+                    <IconButton
+                      size="small"
+                      aria-label="save class name"
+                      onClick={async () => {
+                        const newName = (pendingName || '').trim();
+                        if (!newName) return;
+                        const ok = await renameClassroom(classroomData.id, newName);
+                        if (ok?.success || ok === true) {
+                          setIsEditingName(false);
+                          // optimistic local update
+                          setClassroomData((prev) => (prev ? { ...prev, name: newName } : prev));
+                        }
+                      }}
+                      disabled={!pendingName.trim()}
+                    >
+                      <CheckIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Cancel">
+                    <IconButton
+                      size="small"
+                      aria-label="cancel rename"
+                      onClick={() => {
+                        setPendingName(classroomData?.name || '');
+                        setIsEditingName(false);
+                      }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              )}
+            </Box>
+
             <Box className={styles.headerMeta}>
               <Chip icon={<School />} label={classroomData.subject} color="primary" className={styles.subjectChip} />
               <Chip icon={<Group />} label={classroomData.user_role} color="secondary" className={styles.roleChip} />
@@ -297,8 +396,7 @@ export default function ClassroomView() {
             <Box display="flex" alignItems="center" gap={8}>
               <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6 }}>
                 <option value="joined_at">Join date</option>
-                <option value="full_name">Full name</option>
-                <option value="username">Username</option>
+                <option value="user_id">Username</option>
               </select>
               <select value={order} onChange={(e) => setOrder(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6 }}>
                 <option value="asc">Asc</option>
@@ -307,8 +405,7 @@ export default function ClassroomView() {
               <Button
                 variant="outlined"
                 onClick={() => {
-                  // Trigger refetch by toggling a dependency:
-                  // simply re-setting state will re-run the effect since sort/order are deps.
+                  // re-trigger members fetch by toggling dependent state
                   setOrder((o) => (o === 'asc' ? 'asc' : 'desc'));
                 }}
               >
@@ -317,7 +414,7 @@ export default function ClassroomView() {
             </Box>
           </Box>
 
-          {/* States: loading / error / empty / data */}
+          {/* member states */}
           {memberLoading && (
             <Box display="flex" alignItems="center" gap={1} mt={2}>
               <CircularProgress size={20} />
@@ -327,11 +424,11 @@ export default function ClassroomView() {
 
           {!memberLoading && memberError && <Alert severity="error" sx={{ mt: 2 }}>{memberError}</Alert>}
 
-          {!memberLoading && !memberError && sortedMembers.length === 0 && (
+          {!memberLoading && !memberError && members.length === 0 && (
             <Alert severity="info" sx={{ mt: 2 }}>No students enrolled yet.</Alert>
           )}
 
-          {!memberLoading && !memberError && sortedMembers.length > 0 && (
+          {!memberLoading && !memberError && members.length > 0 && (
             <TableContainer sx={{ mt: 2 }}>
               <Table>
                 <TableHead>
@@ -342,7 +439,7 @@ export default function ClassroomView() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {sortedMembers.map((s, idx) => (
+                  {members.map((s, idx) => (
                     <TableRow key={idx} hover>
                       <TableCell>{s.full_name}</TableCell>
                       <TableCell>{s.username}</TableCell>
