@@ -29,7 +29,6 @@ import { useClassroom } from '../../contexts/ClassroomContext';
 import { useAuth } from '../../hooks/useAuth';
 import client from '../../api/client';
 import styles from './ClassroomView.module.css';
-
 // NOTE: we implement fetchClassMembers locally via client.get
 
 export default function ClassroomView() {
@@ -366,7 +365,7 @@ export default function ClassroomView() {
 
             <Box className={styles.infoItem}>
               <Typography variant="subtitle2" color="textSecondary">
-                Joined
+                Created
               </Typography>
               <Typography variant="h6" className={styles.infoValue}>
                 {formatDate(classroomData.joined_at)}
