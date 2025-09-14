@@ -137,9 +137,6 @@ export default function RegisterForm() {
             <form onSubmit={handleSubmit} className={styles.form}>
               {/* User Type Toggle */}
               <Box className={styles.userTypeSection}>
-                <Typography variant="h6" className={styles.userTypeTitle}>
-                  I am registering as:
-                </Typography>
                 <ToggleButtonGroup
                   value={userType}
                   exclusive
