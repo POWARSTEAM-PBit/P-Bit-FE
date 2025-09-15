@@ -9,7 +9,7 @@ import JoinClassroomPage from './pages/JoinClassroomPage';
 import ClassroomPage from './pages/ClassroomPage';
 import ProfilePage from './pages/ProfilePage';
 import { ClassroomProvider } from './contexts/ClassroomContext';
-
+import ConnectionPage from './pages/Connection';
 export default function App() {
     return (
         <ClassroomProvider>
@@ -20,6 +20,7 @@ export default function App() {
                 <Route path="/login-student" element={<StudentLoginPage />} />
                 <Route path="/login-teacher" element={<TeacherLoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/ble" element={<ConnectionPage />} />
                 <Route path="/create-classroom" element={<CreateClassroomPage />} />
                 <Route path="/join-classroom" element={<JoinClassroomPage />} />
                 <Route path="/classroom/:classroomId" element={<ClassroomPage />} />
