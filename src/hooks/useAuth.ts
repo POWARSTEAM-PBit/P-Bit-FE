@@ -171,7 +171,7 @@ export function useAuth() {
         }
     };
 
-    const isLoggedIn = token !== null && user !== null;
+    const isLoggedIn = token !== null;
 
     const logout = () => {
         setUser(null);

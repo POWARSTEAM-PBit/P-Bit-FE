@@ -116,6 +116,16 @@ export default function Header() {
                 <MenuItem onClick={handleCloseProfileMenu}>Settings</MenuItem>
                 <MenuItem onClick={() => { handleCloseProfileMenu(); logout(); }}>Logout</MenuItem>
               </Menu>
+              <Button
+                color="inherit"
+                onClick={() => {
+                  logout();
+                  navigate('/login-student');
+                }}
+                className={styles.navButton}
+              >
+                Logout
+              </Button>
             </>
           ) : (
             <>
