@@ -233,6 +233,55 @@ export const ClassroomProvider = ({ children }) => {
     }
   };
 
+  // --- added: rename classroom ---
+  const renameClassroom = async (classroomId, newName) => {
+    setLoading(true);
+    setError(null);
+    try {
+      // call backend rename
+      const res = await client.patch(`/class/${classroomId}/rename`, { name: newName });
+      const ok = res?.data?.success;
+      const updated = res?.data?.data;
+      if (!ok || !updated) {
+        const msg = res?.data?.message || 'Failed to rename class';
+        setError(msg);
+        return { success: false, message: msg };
+      }
+
+      // map backend -> frontend
+      const transformed = {
+        id: String(updated.id),
+        name: updated.name,
+        subject: updated.subject,
+        description: updated.description,
+        code: updated.passphrase,        // keep FE "code"
+        passphrase: updated.passphrase,  // optional: for components using "passphrase"
+        owner_id: updated.owner_id,
+        created_at: updated.created_at,
+      };
+
+      // update list
+      setClassrooms(prev =>
+        (prev || []).map(c => (String(c.id) === String(classroomId) ? { ...c, ...transformed } : c))
+      );
+
+      // update current
+      setCurrentClassroom(prev =>
+        prev && String(prev.id) === String(classroomId) ? { ...prev, ...transformed } : prev
+      );
+
+      return { success: true, classroom: transformed };
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Failed to rename class';
+      setError(message);
+      console.error('renameClassroom error:', err);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+  // --- end added ---
+
   const value = {
     classrooms,
     currentClassroom,
@@ -244,6 +293,7 @@ export const ClassroomProvider = ({ children }) => {
     leaveClassroom,
     getClassroomByCode,
     setCurrentClassroom,
+    renameClassroom, // expose rename action
     clearError: () => setError(null)
   };
 
