@@ -1,26 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  CircularProgress,
-  Paper
-} from '@mui/material';
+import {Box, Card, CardContent, TextField, Button, Typography,Alert, CircularProgress, Paper} from '@mui/material';
 import { School, Add } from '@mui/icons-material';
 import { useClassroom } from '../../contexts/ClassroomContext';
 import styles from './CreateClassroom.module.css';
 
 export default function CreateClassroom() {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    subject: ''
-  });
+  const [formData, setFormData] = useState({name: '', description: '', subject: ''});
   const [errors, setErrors] = useState({});
   
   const { createClassroom, loading, error, clearError } = useClassroom();
@@ -68,7 +54,6 @@ export default function CreateClassroom() {
     const result = await createClassroom(formData);
     
     if (result.success) {
-      // Navigate to the newly created classroom
       navigate(`/classroom/${result.classroom.id}`);
     }
   };

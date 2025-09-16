@@ -10,6 +10,7 @@ import ClassroomPage from './pages/ClassroomPage';
 import ProfilePage from './pages/ProfilePage';
 import { ClassroomProvider } from './contexts/ClassroomContext';
 import ConnectionPage from './pages/Connection';
+import LinkDevice from './pages/LinkDevicePage';
 export default function App() {
     return (
         <ClassroomProvider>
@@ -22,6 +23,7 @@ export default function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/ble" element={<ConnectionPage />} />
                 <Route path="/create-classroom" element={<CreateClassroomPage />} />
+                <Route path="/link-device" element={<LinkDevice />} />
                 <Route path="/join-classroom" element={<JoinClassroomPage />} />
                 <Route path="/classroom/:classroomId" element={<ClassroomPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
