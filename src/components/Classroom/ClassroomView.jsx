@@ -20,7 +20,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import { ArrowBack, School, Group } from '@mui/icons-material';
+import { ArrowBack, School, Group, Add } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -29,8 +29,11 @@ import { useClassroom } from '../../contexts/ClassroomContext';
 import { useAuth } from '../../hooks/useAuth';
 import client from '../../api/client';
 import styles from './ClassroomView.module.css';
-// NOTE: we implement fetchClassMembers locally via client.get
 
+/**
+ * @brief The following component denotes the ClassRoom View
+ * @returns JSX.Element
+ */
 export default function ClassroomView() {
   const { classroomId } = useParams();
   const navigate = useNavigate();
@@ -385,6 +388,20 @@ export default function ClassroomView() {
           )}
         </Paper>
 
+                {/* Registered Devices */}
+        <Paper elevation={2} className={styles.classroomContent} style={{ marginTop: 24 }}>
+          <Box className={styles.contentHeader}>
+            <Typography variant="h5" component="h2" className={styles.contentTitle}>
+              Registered Devices
+            </Typography>
+          </Box>
+
+          {/* Placeholder device data state */}
+          {/* Replace this with real fetch logic */}
+          <DeviceTable classroomId={wantedId} />
+        </Paper>
+
+
         {/* Enrolled Students */}
         <Paper elevation={2} className={styles.classroomContent} style={{ marginTop: 24 }}>
           <Box className={styles.contentHeader} display="flex" alignItems="center" justifyContent="space-between">
@@ -465,3 +482,96 @@ export default function ClassroomView() {
     </Box>
   );
 }
+
+function DeviceTable({ classroomId }) {
+  const [deviceLoading, setDeviceLoading] = useState(false);
+  const [deviceError, setDeviceError] = useState('');
+  const [devices, setDevices] = useState([]);
+
+  const [linking, setLinking] = useState(false);
+  const [macAddr, setMacAddr] = useState('');
+  const [deviceName, setDeviceName] = useState('');
+  const [linkError, setLinkError] = useState('');
+  const [linkSuccess, setLinkSuccess] = useState('');
+  const navigate = useNavigate();
+
+  const fetchDevices = async () => {
+  setDeviceLoading(true);
+  setDeviceError('');
+  try {
+    console.log(classroomId);
+    const resp = await client.get(`/device/get/${classroomId}`);
+    console.log('⚠️ Device API Response:', JSON.stringify(resp, null, 2)); // 👈 FULL LOG
+
+    const list = resp?.data?.data || [];
+    setDevices(list);
+  } catch (e) {
+    setDeviceError(e?.message || 'Failed to load devices');
+    setDevices([]);
+  } finally {
+    setDeviceLoading(false);
+  }
+};
+
+
+  useEffect(() => {
+    if (!classroomId) return;
+    fetchDevices();
+  }, [classroomId]);
+
+  return (
+    <>
+<Box display="flex" flexDirection="column" gap={2} mt={2}>
+  <Button
+    variant="contained"
+    size="small"
+    startIcon={<Add />}
+    onClick={() =>
+      navigate('/link-device', {
+        state: { class_id: classroomId }
+      })
+    }
+    sx={{
+      minWidth: 'auto',
+      padding: '8px 16px',  // Increased from '4px 8px' (vertical, horizontal)
+      fontSize: '0.75rem',
+      alignSelf: 'flex-end'
+    }}
+  >
+    Link Device
+  </Button>
+</Box>
+      {/* Devices table */}
+      {deviceLoading ? (
+        <Box display="flex" alignItems="center" gap={1} mt={2}>
+          <CircularProgress size={20} />
+          <Typography>Loading devices…</Typography>
+        </Box>
+      ) : deviceError ? (
+        <Alert severity="error" sx={{ mt: 2 }}>{deviceError}</Alert>
+      ) : devices.length === 0 ? (
+        <Alert severity="info" sx={{ mt: 2 }}>No devices registered yet.</Alert>
+      ) : (
+        <TableContainer sx={{ mt: 4 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>MAC Address</TableCell>
+                <TableCell>Device Name</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {devices.map((device, idx) => (
+                <TableRow key={idx} hover>
+                  <TableCell>{device.mac_addr}</TableCell>
+                  <TableCell>{device.device_name || '—'}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+    </>
+  );
+}
+
