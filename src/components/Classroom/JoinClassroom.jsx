@@ -25,7 +25,7 @@ import {
 } from '@mui/material';
 import { Group, Login, PersonAdd, Lock, School } from '@mui/icons-material';
 import { useClassroom } from '../../contexts/ClassroomContext';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import styles from './JoinClassroom.module.css';
 
 export default function JoinClassroom() {
@@ -98,8 +98,26 @@ export default function JoinClassroom() {
     const result = await joinClassroomAnonymous(code, firstName, pin);
     
     if (result.success) {
+      // Show a message if user is returning
+      if (result.isReturning) {
+        // You could show a toast notification here
+        console.log(`Welcome back, ${firstName}!`);
+      }
       // Navigate to the joined classroom
       navigate(`/classroom/${result.classroom.id}`);
+      return result; // Return the result for success checking
+    } else {
+      // Handle specific error cases
+      if (result.errorType === 'name_exists') {
+        setErrors({
+          pinCode: 'Incorrect PIN. Please check your PIN or contact your teacher for assistance.'
+        });
+      } else {
+        setErrors({
+          general: result.message
+        });
+      }
+      return result; // Return the result for error checking
     }
   };
 
@@ -115,6 +133,8 @@ export default function JoinClassroom() {
       newErrors.studentName = 'First name is required';
     } else if (studentName.length > 50) {
       newErrors.studentName = 'First name must be 50 characters or less';
+    } else if (studentName.length < 2) {
+      newErrors.studentName = 'First name must be at least 2 characters';
     }
     
     if (!pinCode.trim()) {
@@ -132,8 +152,12 @@ export default function JoinClassroom() {
       return;
     }
 
-    setShowJoinDialog(false);
-    await joinClassroomAnonymousDirectly(pendingClassroomCode, studentName, pinCode);
+    const result = await joinClassroomAnonymousDirectly(pendingClassroomCode, studentName, pinCode);
+    
+    // Only close the dialog if the join was successful
+    if (result && result.success) {
+      setShowJoinDialog(false);
+    }
   };
 
   const handleJoinDialogClose = () => {
@@ -269,7 +293,7 @@ export default function JoinClassroom() {
                   <Typography variant="h6">Join Anonymously</Typography>
                 </Box>
                 <Typography variant="body2" color="textSecondary">
-                  Join without creating an account. You'll need the passphrase and PIN code.
+                  Join without creating an account. You can return anytime using the same name and PIN.
                 </Typography>
                 <Chip 
                   label="Passphrase + PIN" 
@@ -290,13 +314,19 @@ export default function JoinClassroom() {
                 Anonymous Join Details
               </Typography>
               
+              {errors.general && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  {errors.general}
+                </Alert>
+              )}
+              
               <TextField
                 fullWidth
                 label="First Name"
                 value={studentName}
                 onChange={(e) => setStudentName(e.target.value)}
                 error={!!errors.studentName}
-                helperText={errors.studentName}
+                helperText={errors.studentName || "Your name must be unique in this classroom"}
                 className={styles.formTextField}
                 placeholder="Enter your first name"
                 inputProps={{ maxLength: 50 }}
@@ -308,7 +338,7 @@ export default function JoinClassroom() {
                 value={pinCode}
                 onChange={(e) => setPinCode(e.target.value.replace(/\D/g, ''))}
                 error={!!errors.pinCode}
-                helperText={errors.pinCode || "4-digit PIN provided by your teacher"}
+                helperText={errors.pinCode || "4-digit PIN provided by your teacher. Use the same PIN to return later."}
                 className={styles.formTextField}
                 placeholder="1234"
                 inputProps={{ 

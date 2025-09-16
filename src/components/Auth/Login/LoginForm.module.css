@@ -1,41 +1,38 @@
-/* ===== Page container ===== */
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 64px);
-  padding: 16px;
+  padding: 2rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-/* ===== Card box ===== */
-.paper,
-.card {
+.paper {
   width: 100%;
-  max-width: 400px;              /* compact width */
-  border-radius: 14px;
+  max-width: 500px;
+  border-radius: 16px;
   overflow: hidden;
+}
+
+.card {
   border: none;
   box-shadow: none;
 }
 
-/* ===== Inner padding ===== */
 .cardContent {
-  padding: 22px 18px 18px;       /* a bit more space on top */
+  padding: 3rem 2rem;
 }
 
-/* ===== Header (icon + title) ===== */
 .header {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 4px;               /* leave some top breathing room */
-  margin-bottom: 12px;
+  margin-bottom: 2rem;
+  gap: 1rem;
 }
 
 .icon {
-  font-size: 20px !important;    /* smaller icon */
+  font-size: 2.5rem !important;
   color: #667eea;
 }
 
@@ -43,100 +40,94 @@
   color: #2c3e50;
   font-weight: 600 !important;
   text-align: center;
-  font-size: 19px !important;    /* smaller title */
-  line-height: 1.25;
 }
 
-/* ===== Alerts ===== */
 .alert {
-  margin-bottom: 12px;
+  margin-bottom: 1.5rem;
   border-radius: 8px;
 }
 
-/* ===== Form layout ===== */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 10px;                     /* tighter vertical rhythm */
+  gap: 1.5rem;
 }
 
-/* ===== TextField sizing ===== */
+.textField {
+  margin-bottom: 0.5rem;
+}
+
 .textField .MuiOutlinedInput-root {
   border-radius: 8px;
-  height: 38px;                  /* shorter input height */
-  font-size: 13.5px;             /* input text size */
 }
 
-/* label font-size for MUI */
-.textField .MuiInputLabel-root {
-  font-size: 13px;               /* label text size */
-}
-.textField .MuiInputLabel-root.Mui-focused {
-  font-size: 12.5px;
-}
-
-/* focus/hover colors */
 .textField .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
   border-color: #667eea;
 }
+
 .textField .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
   border-color: #667eea;
 }
 
-/* ===== Submit button ===== */
 .submitButton {
-  margin-top: 6px;
-  padding: 9px 14px;             /* smaller button */
+  margin-top: 1rem;
+  padding: 12px 24px;
   border-radius: 8px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   font-weight: 600;
   text-transform: none;
-  font-size: 14px;               /* smaller label */
-  transition: all 0.2s ease;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
 }
+
 .submitButton:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.28);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
+
 .submitButton:disabled {
   transform: none;
   box-shadow: none;
 }
 
-/* ===== Bottom link rows ===== */
 .switchPrompt,
 .registerPrompt {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 12.5px;             /* smaller helper text */
-  line-height: 1.4;
-}
-.switchPrompt {
-  margin-top: 12px;
-  padding-top: 8px;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
   border-top: 1px solid #ecf0f1;
 }
-.registerPrompt { margin-top: 6px; }
 
-/* link look */
-.link {
+.switchLink,
+.registerLink {
   color: #667eea !important;
   font-weight: 500;
   text-transform: none;
-  font-size: 12.5px !important;  /* match helper text */
 }
-.link:hover { background-color: rgba(102,126,234,0.1) !important; }
 
-/* ===== Responsive ===== */
+.switchLink:hover,
+.registerLink:hover {
+  background-color: rgba(102, 126, 234, 0.1) !important;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-  .paper, .card { max-width: 360px; }
-  .cardContent { padding: 18px 16px; }
-  .title { font-size: 18px !important; }
-  .icon { font-size: 18px !important; }
-}
-
-@media (max-width: 480px) {
-  .paper, .card { max-width: 92vw; }
+  .container {
+    padding: 1rem;
+  }
+  
+  .cardContent {
+    padding: 2rem 1.5rem;
+  }
+  
+  .title {
+    font-size: 1.75rem !important;
+  }
+  
+  .icon {
+    font-size: 2rem !important;
+  }
 }

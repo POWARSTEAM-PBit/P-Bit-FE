@@ -8,7 +8,9 @@ import {
   Avatar,
   Divider,
   Chip,
-  Grid
+  Grid,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   ArrowBack,
@@ -17,14 +19,22 @@ import {
   Person,
   Email,
   Badge,
-  AccountCircle
+  AccountCircle,
+  Devices
 } from '@mui/icons-material';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
+import { useState } from 'react';
+import DeviceRegistration from '../Device/DeviceRegistration';
 import styles from './Profile.module.css';
 
 export default function Profile() {
   const { user, isLoggedIn, logout } = useAuth();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(0);
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
 
   if (!isLoggedIn || !user) {
     return (
@@ -86,7 +96,18 @@ export default function Profile() {
           </Typography>
         </Box>
 
-        <Grid container spacing={3}>
+        {/* Tabs for Teachers */}
+        {getUserRole() === 'teacher' && (
+          <Box sx={{ mb: 3 }}>
+            <Tabs value={activeTab} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Tab label="Profile Information" icon={<AccountCircle />} />
+              <Tab label="Device Management" icon={<Devices />} />
+            </Tabs>
+          </Box>
+        )}
+
+        {activeTab === 0 && (
+          <Grid container spacing={3}>
           {/* Profile Card */}
           <Grid item xs={12} md={4}>
             <Paper elevation={2} className={styles.profileCard}>
@@ -175,6 +196,68 @@ export default function Profile() {
             </Paper>
           </Grid>
         </Grid>
+        )}
+
+        {/* Device Management Tab for Teachers */}
+        {getUserRole() === 'teacher' && activeTab === 1 && (
+          <DeviceRegistration />
+        )}
+
+        {/* For Students, show profile without tabs */}
+        {getUserRole() !== 'teacher' && (
+          <Grid container spacing={3}>
+            {/* Profile Card */}
+            <Grid item xs={12} md={4}>
+              <Paper elevation={2} className={styles.profileCard}>
+                <Box className={styles.profileHeader}>
+                  <Avatar className={styles.avatar}>
+                    <Person />
+                  </Avatar>
+                  <Typography variant="h5" className={styles.userName}>
+                    {getUserName()}
+                  </Typography>
+                  <Chip
+                    icon={getRoleIcon()}
+                    label={getUserRole().charAt(0).toUpperCase() + getUserRole().slice(1)}
+                    color={getRoleColor()}
+                    className={styles.roleChip}
+                  />
+                </Box>
+
+                <Divider className={styles.divider} />
+
+                <Box className={styles.profileDetails}>
+                  <Box className={styles.detailItem}>
+                    <Email className={styles.detailIcon} />
+                    <Typography variant="body2" className={styles.detailText}>
+                      {user.email}
+                    </Typography>
+                  </Box>
+
+                  <Box className={styles.detailItem}>
+                    <Badge className={styles.detailIcon} />
+                    <Typography variant="body2" className={styles.detailText}>
+                      ID: {user.id}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Divider className={styles.divider} />
+
+                <Box className={styles.actions}>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={logout}
+                    className={styles.logoutButton}
+                  >
+                    Logout
+                  </Button>
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+        )}
       </Container>
     </Box>
   );

@@ -1,203 +1,192 @@
-/* ===== Layout ===== */
-/* center card on page */
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 64px);
-  padding: 16px;
+  padding: 2rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-/* card shell */
-.paper,
-.card {
+.paper {
   width: 100%;
-  max-width: 400px;          /* compact width */
-  border-radius: 14px;
+  max-width: 600px;
+  border-radius: 16px;
   overflow: hidden;
+}
+
+.card {
   border: none;
   box-shadow: none;
 }
 
-/* inner padding */
 .cardContent {
-  padding: 26px 18px 18px;
+  padding: 3rem 2rem;
 }
 
-/* ===== Header ===== */
-/* icon + title row */
 .header {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 2rem;
+  gap: 1rem;
 }
 
-/* header icon */
 .icon {
-  font-size: 22px !important;
+  font-size: 2.5rem !important;
   color: #667eea;
 }
 
-/* page title */
 .title {
   color: #2c3e50;
-  font-weight: 700 !important;
-  font-size: 22px !important;
-  line-height: 1.2;
+  font-weight: 600 !important;
   text-align: center;
 }
 
-/* alert spacing */
 .alert {
-  margin-bottom: 12px;
+  margin-bottom: 1.5rem;
   border-radius: 8px;
 }
 
-/* ===== Form ===== */
-/* vertical rhythm */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 1.5rem;
 }
 
-/* user type section */
+/* User Type Toggle Section */
 .userTypeSection {
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 1rem;
 }
 
-/* sub title */
 .userTypeTitle {
   color: #2c3e50;
   font-weight: 600 !important;
-  font-size: 14px !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 1rem !important;
 }
 
-/* toggle group width */
 .toggleGroup {
   width: 100%;
-  max-width: 320px;
+  max-width: 400px;
   margin: 0 auto;
 }
 
-/* toggle buttons */
 .toggleButton {
   flex: 1;
-  padding: 8px 14px !important;
+  padding: 12px 24px !important;
   border-radius: 8px !important;
   text-transform: none !important;
   font-weight: 500 !important;
-  font-size: 0.92rem !important;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
-/* selected toggle */
 .toggleButton.Mui-selected {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: #fff !important;
-  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.25);
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
-/* hover lift */
 .toggleButton:hover {
   transform: translateY(-1px);
 }
 
-/* toggle icon */
 .toggleIcon {
-  margin-right: 6px;
-  font-size: 16px !important;
+  margin-right: 8px;
+  font-size: 1.2rem !important;
 }
 
-/* input spacing */
 .textField {
-  margin-bottom: 4px;
+  margin-bottom: 0.5rem;
 }
 
-/* input size/look */
 .textField .MuiOutlinedInput-root {
   border-radius: 8px;
-  height: 40px;              /* compact field height */
-  font-size: 0.95rem;
 }
 
-/* input focus color */
 .textField .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
   border-color: #667eea;
 }
+
 .textField .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
   border-color: #667eea;
 }
 
-/* submit button */
 .submitButton {
-  margin-top: 6px;
-  padding: 10px 16px;
+  margin-top: 1rem;
+  padding: 12px 24px;
   border-radius: 8px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   font-weight: 600;
   text-transform: none;
-  font-size: 1rem;
-  transition: all 0.2s ease;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
 }
 
-/* submit hover */
 .submitButton:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.28);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
 
-/* submit disabled */
 .submitButton:disabled {
   transform: none;
   box-shadow: none;
 }
 
-/* ===== Bottom links ===== */
-/* login/register prompt row */
 .loginPrompt {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 14px;
-  padding-top: 10px;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
   border-top: 1px solid #ecf0f1;
-  font-size: 13.5px;
 }
 
-/* prompt links */
 .loginLink {
   color: #667eea !important;
   font-weight: 500;
   text-transform: none;
-  font-size: 13.5px !important;
 }
 
-/* link hover bg */
 .loginLink:hover {
   background-color: rgba(102, 126, 234, 0.1) !important;
 }
 
-/* ===== Responsive ===== */
+/* Responsive Design */
 @media (max-width: 768px) {
-  .container { padding: 12px; }
-  .paper, .card { max-width: 360px; }
-  .cardContent { padding: 16px; }
-  .title { font-size: 20px !important; }
-  .icon { font-size: 20px !important; }
-  .toggleGroup { max-width: 300px; }
-  .toggleButton { padding: 8px 12px !important; font-size: 0.9rem !important; }
+  .container {
+    padding: 1rem;
+  }
+  
+  .cardContent {
+    padding: 2rem 1.5rem;
+  }
+  
+  .title {
+    font-size: 1.75rem !important;
+  }
+  
+  .icon {
+    font-size: 2rem !important;
+  }
+  
+  .toggleButton {
+    padding: 10px 16px !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .toggleIcon {
+    font-size: 1rem !important;
+  }
 }
 
 @media (max-width: 480px) {
-  .paper, .card { max-width: 92vw; }
-  .toggleGroup { flex-direction: column; gap: 8px; max-width: 100%; }
-  .toggleButton { width: 100%; }
+  .toggleGroup {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .toggleButton {
+    width: 100%;
+  }
 }

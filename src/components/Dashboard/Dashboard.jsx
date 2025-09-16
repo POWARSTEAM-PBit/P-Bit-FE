@@ -46,7 +46,7 @@ import {
   Lock
 } from '@mui/icons-material';
 import { useClassroom } from '../../contexts/ClassroomContext';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import styles from './Dashboard.module.css';
 
 export default function Dashboard() {

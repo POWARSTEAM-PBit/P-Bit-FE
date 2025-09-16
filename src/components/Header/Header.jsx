@@ -11,7 +11,7 @@ import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import Avatar from '@mui/material/Avatar';
 import styles from './Header.module.css';
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../contexts/AuthContext";
 
 const pages = [
   { name: 'Home', path: '/' },
@@ -24,7 +24,7 @@ export default function Header() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElProfile, setAnchorElProfile] = React.useState(null);
 
-  const { isLoggedIn, user, logout } = useAuth();
+  const { isLoggedIn, user, logout, loading } = useAuth();
   const navigate = useNavigate();
 
   // Force re-render when auth state changes
@@ -103,7 +103,7 @@ export default function Header() {
           {isLoggedIn ? (
             <>
               <IconButton onClick={handleOpenProfileMenu} color="inherit">
-                <Avatar alt={user?.first_name || user?.name} src="/static/images/avatar/1.jpg" />
+                <Avatar alt={user?.first_name || user?.name || 'User'} src="/static/images/avatar/1.jpg" />
               </IconButton>
               <Menu
                 anchorEl={anchorElProfile}
@@ -114,18 +114,8 @@ export default function Header() {
               >
                 <MenuItem onClick={() => { handleCloseProfileMenu(); navigate('/profile'); }}>Profile</MenuItem>
                 <MenuItem onClick={handleCloseProfileMenu}>Settings</MenuItem>
-                <MenuItem onClick={() => { handleCloseProfileMenu(); logout(); }}>Logout</MenuItem>
+                <MenuItem onClick={() => { handleCloseProfileMenu(); logout(); navigate('/'); }}>Logout</MenuItem>
               </Menu>
-              <Button
-                color="inherit"
-                onClick={() => {
-                  logout();
-                  navigate('/login-student');
-                }}
-                className={styles.navButton}
-              >
-                Logout
-              </Button>
             </>
           ) : (
             <>

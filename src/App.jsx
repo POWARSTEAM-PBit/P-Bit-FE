@@ -8,30 +8,35 @@ import CreateClassroomPage from './pages/CreateClassroomPage';
 import JoinClassroomPage from './pages/JoinClassroomPage';
 import ClassroomPage from './pages/ClassroomPage';
 import ProfilePage from './pages/ProfilePage';
+import DirectPBitPage from './pages/DirectPBitPage';
 import { ClassroomProvider } from './contexts/ClassroomContext';
-import { AuthProvider } from './hooks/useAuth'; // Import the AuthProvider
-import ConnectionPage from './pages/Connection';
-import LinkDevice from './pages/LinkDevicePage';
+import { AuthProvider } from './contexts/AuthContext';
+import { DeviceProvider } from './contexts/DeviceContext';
+import { GroupProvider } from './contexts/GroupContext';
 
 export default function App() {
-  return (
-    <AuthProvider> {/* Wrap everything with AuthProvider */}
-      <ClassroomProvider>
-        <Header />
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/login-student" element={<StudentLoginPage />} />
-          <Route path="/login-teacher" element={<TeacherLoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/ble" element={<ConnectionPage />} />
-          <Route path="/create-classroom" element={<CreateClassroomPage />} />
-          <Route path="/link-device" element={<LinkDevice />} />
-          <Route path="/join-classroom" element={<JoinClassroomPage />} />
-          <Route path="/classroom/:classroomId" element={<ClassroomPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-        </Routes>
-      </ClassroomProvider>
-    </AuthProvider>
-  );
+    return (
+        <AuthProvider>
+            <ClassroomProvider>
+                <DeviceProvider>
+                    <GroupProvider>
+                        <Header />
+                        <Routes>
+                            <Route path="/" element={<DashboardPage />} />
+                            <Route path="/dashboard" element={<DashboardPage />} />
+                            <Route path="/login-student" element={<StudentLoginPage />} />
+                            <Route path="/login-teacher" element={<TeacherLoginPage />} />
+                            <Route path="/register" element={<RegisterPage />} />
+                            <Route path="/create-classroom" element={<CreateClassroomPage />} />
+                            <Route path="/join-classroom" element={<JoinClassroomPage />} />
+                            <Route path="/classroom/:classroomId" element={<ClassroomPage />} />
+                            <Route path="/profile" element={<ProfilePage />} />
+                            <Route path="/pbit" element={<DirectPBitPage />} />
+                            <Route path="/pbit/:macAddress" element={<DirectPBitPage />} />
+                        </Routes>
+                    </GroupProvider>
+                </DeviceProvider>
+            </ClassroomProvider>
+        </AuthProvider>
+    );
 }

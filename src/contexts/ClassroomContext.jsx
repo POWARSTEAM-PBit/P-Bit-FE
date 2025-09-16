@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from './AuthContext';
 import client from '../api/client';
 
 const ClassroomContext = createContext();
@@ -147,29 +147,62 @@ export const ClassroomProvider = ({ children }) => {
         pin_code: pinCode
       };
 
-      const response = await client.post('/class/join-anonymous', joinData);
-      if (response.data.success) {
-        const joinedClassroom = response.data.data;
-        // Transform to match frontend structure
+      // First, try to find existing anonymous user with same name and PIN
+      const findResponse = await client.post('/class/find-anonymous-user', joinData);
+      
+      if (findResponse.data.success && findResponse.data.data) {
+        // User exists with correct name and PIN, log them back in
+        const existingUser = findResponse.data.data;
         const transformedClassroom = {
-          id: joinedClassroom.class_id,
-          name: joinedClassroom.class_name,
-          subject: joinedClassroom.subject,
+          id: existingUser.class_id,
+          name: existingUser.class_name,
+          subject: existingUser.subject,
           code: passphrase,
           user_role: 'student',
-          joined_at: joinedClassroom.joined_at,
-          student_id: joinedClassroom.student_id,
-          first_name: joinedClassroom.first_name
+          joined_at: existingUser.joined_at,
+          student_id: existingUser.student_id,
+          first_name: existingUser.first_name,
+          is_returning: true
         };
         setClassrooms(prev => {
           const exists = prev.find(c => c.id === transformedClassroom.id);
           return exists ? prev : [...prev, transformedClassroom];
         });
         setCurrentClassroom(transformedClassroom);
-        return { success: true, classroom: transformedClassroom };
+        return { success: true, classroom: transformedClassroom, isReturning: true };
+      } else if (findResponse.data.error_type === 'name_exists') {
+        // Name exists but PIN is wrong
+        return { 
+          success: false, 
+          message: `A student named "${firstName}" already exists in this classroom. Please use the correct PIN or contact your teacher for assistance.`,
+          errorType: 'name_exists'
+        };
       } else {
-        setError(response.data.message);
-        return { success: false, message: response.data.message };
+        // User doesn't exist, create new anonymous user
+        const response = await client.post('/class/join-anonymous', joinData);
+        if (response.data.success) {
+          const joinedClassroom = response.data.data;
+          const transformedClassroom = {
+            id: joinedClassroom.class_id,
+            name: joinedClassroom.class_name,
+            subject: joinedClassroom.subject,
+            code: passphrase,
+            user_role: 'student',
+            joined_at: joinedClassroom.joined_at,
+            student_id: joinedClassroom.student_id,
+            first_name: joinedClassroom.first_name,
+            is_returning: false
+          };
+          setClassrooms(prev => {
+            const exists = prev.find(c => c.id === transformedClassroom.id);
+            return exists ? prev : [...prev, transformedClassroom];
+          });
+          setCurrentClassroom(transformedClassroom);
+          return { success: true, classroom: transformedClassroom, isReturning: false };
+        } else {
+          setError(response.data.message);
+          return { success: false, message: response.data.message };
+        }
       }
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to join classroom';
@@ -233,54 +266,37 @@ export const ClassroomProvider = ({ children }) => {
     }
   };
 
-  // --- added: rename classroom ---
-  const renameClassroom = async (classroomId, newName) => {
-    setLoading(true);
-    setError(null);
+  // Get anonymous students for a classroom (teachers only)
+  const getAnonymousStudents = useCallback(async (classroomId) => {
     try {
-      // call backend rename
-      const res = await client.patch(`/class/${classroomId}/rename`, { name: newName });
-      const ok = res?.data?.success;
-      const updated = res?.data?.data;
-      if (!ok || !updated) {
-        const msg = res?.data?.message || 'Failed to rename class';
-        setError(msg);
-        return { success: false, message: msg };
+      const response = await client.get(`/class/${classroomId}/anonymous-students`);
+      if (response.data.success) {
+        return { success: true, students: response.data.data };
+      } else {
+        return { success: false, message: response.data.message };
       }
-
-      // map backend -> frontend
-      const transformed = {
-        id: String(updated.id),
-        name: updated.name,
-        subject: updated.subject,
-        description: updated.description,
-        code: updated.passphrase,        // keep FE "code"
-        passphrase: updated.passphrase,  // optional: for components using "passphrase"
-        owner_id: updated.owner_id,
-        created_at: updated.created_at,
-      };
-
-      // update list
-      setClassrooms(prev =>
-        (prev || []).map(c => (String(c.id) === String(classroomId) ? { ...c, ...transformed } : c))
-      );
-
-      // update current
-      setCurrentClassroom(prev =>
-        prev && String(prev.id) === String(classroomId) ? { ...prev, ...transformed } : prev
-      );
-
-      return { success: true, classroom: transformed };
     } catch (err) {
-      const message = err?.response?.data?.message || 'Failed to rename class';
-      setError(message);
-      console.error('renameClassroom error:', err);
+      const message = err.response?.data?.message || 'Failed to fetch anonymous students';
       return { success: false, message };
-    } finally {
-      setLoading(false);
     }
-  };
-  // --- end added ---
+  }, []);
+
+  // Update PIN for an anonymous student (teachers only)
+  const updateStudentPin = useCallback(async (classroomId, studentId, newPin) => {
+    try {
+      const response = await client.put(`/class/${classroomId}/anonymous-student/${studentId}/pin`, {
+        pin_code: newPin
+      });
+      if (response.data.success) {
+        return { success: true, message: 'PIN updated successfully' };
+      } else {
+        return { success: false, message: response.data.message };
+      }
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to update PIN';
+      return { success: false, message };
+    }
+  }, []);
 
   const value = {
     classrooms,
@@ -292,8 +308,9 @@ export const ClassroomProvider = ({ children }) => {
     joinClassroomAnonymous,
     leaveClassroom,
     getClassroomByCode,
+    getAnonymousStudents,
+    updateStudentPin,
     setCurrentClassroom,
-    renameClassroom, // expose rename action
     clearError: () => setError(null)
   };
 

@@ -16,119 +16,91 @@ import {
   TableCell,
   TableRow,
   TableContainer,
-  TextField,
-  IconButton,
-  Tooltip,
 } from '@mui/material';
-import { ArrowBack, School, Group, Add } from '@mui/icons-material';
-import EditIcon from '@mui/icons-material/Edit';
-import CheckIcon from '@mui/icons-material/Check';
-import CloseIcon from '@mui/icons-material/Close';
+import { ArrowBack, School, Group } from '@mui/icons-material';
 
 import { useClassroom } from '../../contexts/ClassroomContext';
-import { useAuth } from '../../hooks/useAuth';
-import client from '../../api/client';
+import { useAuth } from '../../contexts/AuthContext';
 import styles from './ClassroomView.module.css';
 
-/**
- * @brief The following component denotes the ClassRoom View
- * @returns JSX.Element
- */
+import { fetchClassMembers } from '../../api/classMembers';
+import IoTDataVisualization from '../IoT/IoTDataVisualization';
+import AnonymousStudentManager from './AnonymousStudentManager';
+import ClassroomDeviceManager from './ClassroomDeviceManager';
+import GroupManager from './GroupManager';
+import StudentGroupInfo from './StudentGroupInfo';
+
 export default function ClassroomView() {
   const { classroomId } = useParams();
   const navigate = useNavigate();
 
-  // classroom context
-  const { currentClassroom, classrooms, loading, error, renameClassroom } = useClassroom();
+  // Bring in classroom context pieces
+  const { currentClassroom, classrooms, fetchClassrooms, loading, error } = useClassroom();
   const { isLoggedIn, user } = useAuth();
 
   const [classroomData, setClassroomData] = useState(null);
 
-  // members state
+  // Members state
   const [memberLoading, setMemberLoading] = useState(false);
   const [memberError, setMemberError] = useState('');
   const [members, setMembers] = useState([]);
 
-  // sorting state
+  // Sorting state
   const [sortBy, setSortBy] = useState('joined_at');
   const [order, setOrder] = useState('asc');
 
-  // rename state (teacher only)
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [pendingName, setPendingName] = useState('');
-
-  // normalize route id once
+  // Normalize route id once
   const wantedId = useMemo(() => String(classroomId ?? ''), [classroomId]);
 
-  // helper to normalize a classroom object's id field
+  // Determine if current user is a student or teacher
+  // Check both AuthContext user and classroom user_role (for anonymous students)
+  const isStudent = user?.user_type === 'student' || user?.role === 'student' || classroomData?.user_role === 'student';
+  const isTeacher = user?.user_type === 'teacher' || user?.role === 'teacher' || classroomData?.user_role === 'teacher';
+  
+
+  // Helper to normalize a classroom object's id field
   const normId = (c) =>
     c?.id != null ? String(c.id) : c?.class_id != null ? String(c.class_id) : '';
 
-  // make sure we only run remote fallback once
+  // Make sure we only call fetchClassrooms() once as a fallback
   const hasFetchedRef = useRef(false);
 
-  // resolve classroom data from context or remote fallback
+  // Resolve classroom data:
+  // 1) prefer currentClassroom (if matches)
+  // 2) else find in classrooms list
+  // 3) else fetch list once and try again
   useEffect(() => {
     if (!wantedId) {
       setClassroomData(null);
       return;
     }
 
-    // prefer currentClassroom if matches
+    // 1) currentClassroom
     if (currentClassroom && normId(currentClassroom) === wantedId) {
       setClassroomData(currentClassroom);
-      setPendingName(currentClassroom?.name || '');
       return;
     }
 
-    // else find in classrooms list
+    // 2) search in classrooms list
     const found = (classrooms || []).find((c) => normId(c) === wantedId);
     if (found) {
       setClassroomData(found);
-      setPendingName(found?.name || '');
       return;
     }
 
-    // fallback: fetch owned/enrolled once and pick the one we need
+    // 3) fetch once if possible
     let cancelled = false;
     (async () => {
-      if (hasFetchedRef.current || !isLoggedIn) {
+      if (hasFetchedRef.current || typeof fetchClassrooms !== 'function') {
         if (!cancelled) setClassroomData(null);
         return;
       }
       try {
         hasFetchedRef.current = true;
-        // choose endpoint by user role
-        const endpoint =
-          (user?.user_type || user?.userType || '').toString().toLowerCase() === 'teacher'
-            ? '/class/owned'
-            : '/class/enrolled';
-        const resp = await client.get(endpoint);
-        const list = resp?.data?.data || [];
-        const f2 = list.find((c) => String(c.id) === wantedId);
-        if (!cancelled) {
-          if (f2) {
-            // minimal transform to FE shape used here
-            const transformed = {
-              id: f2.id,
-              name: f2.name,
-              subject: f2.subject,
-              description: f2.description,
-              code: f2.passphrase,
-              user_role:
-                (user?.user_type || user?.userType || '').toString().toLowerCase() === 'teacher'
-                  ? 'teacher'
-                  : 'student',
-              joined_at: f2.joined_at || f2.created_at,
-              member_count: f2.member_count,
-              owner_name: f2.owner_name,
-            };
-            setClassroomData(transformed);
-            setPendingName(transformed?.name || '');
-          } else {
-            setClassroomData(null);
-          }
-        }
+        const list = (await fetchClassrooms()) || [];
+        if (cancelled) return;
+        const f2 = list.find((c) => normId(c) === wantedId);
+        setClassroomData(f2 || null);
       } catch {
         if (!cancelled) setClassroomData(null);
       }
@@ -137,9 +109,9 @@ export default function ClassroomView() {
     return () => {
       cancelled = true;
     };
-  }, [wantedId, currentClassroom, classrooms, isLoggedIn, user]);
+  }, [wantedId, currentClassroom, classrooms, fetchClassrooms]);
 
-  // load members via backend
+  // Fetch class members from backend (with cleanup to avoid setting state after unmount)
   useEffect(() => {
     if (!wantedId) return;
 
@@ -149,14 +121,10 @@ export default function ClassroomView() {
       setMemberLoading(true);
       setMemberError('');
       try {
-        // call GET /class/{id}/members with sort params
-        const resp = await client.get(`/class/${wantedId}/members`, {
-          params: { sort_by: sortBy, order },
-        });
-        const ok = resp?.data?.success;
-        const list = ok ? resp?.data?.data : [];
+        const list = await fetchClassMembers(wantedId, { sort_by: sortBy, order });
         if (cancelled) return;
 
+        // Map API response to required fields
         const mapped = (list || []).map((u) => ({
           full_name: `${(u.first_name || '').trim()} ${(u.last_name || '').trim()}`.trim() || u.user_id,
           username: u.user_id,
@@ -178,15 +146,17 @@ export default function ClassroomView() {
     };
   }, [wantedId, sortBy, order]);
 
-  // keep pendingName in sync if classroom changes
-  useEffect(() => {
-    setPendingName(classroomData?.name || '');
-  }, [classroomData?.name]);
-
-  // role check for rename button
-  const userType = (user?.user_type || user?.userType || '').toString().toLowerCase();
-  const canEdit =
-    userType === 'teacher' || (classroomData?.user_role || '').toString().toLowerCase() === 'teacher';
+  // Local sorting (kept even though server can sort; useful if backend ignores params)
+  const sortedMembers = useMemo(() => {
+    const dir = order === 'asc' ? 1 : -1;
+    return [...members].sort((a, b) => {
+      if (sortBy === 'full_name') return a.full_name.localeCompare(b.full_name) * dir;
+      if (sortBy === 'user_id') return a.username.localeCompare(b.username) * dir;
+      const ta = a.join_date ? new Date(a.join_date).getTime() : 0;
+      const tb = b.join_date ? new Date(b.join_date).getTime() : 0;
+      return (ta - tb) * dir;
+    });
+  }, [members, sortBy, order]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '—';
@@ -195,7 +165,7 @@ export default function ClassroomView() {
     return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  // global loading/errors from context
+  // Global loading/errors from context
   if (loading) {
     return (
       <Box className={styles.loadingContainer}>
@@ -205,7 +175,7 @@ export default function ClassroomView() {
         </Typography>
       </Box>
     );
-    }
+  }
 
   if (error) {
     return (
@@ -258,69 +228,9 @@ export default function ClassroomView() {
           </Button>
 
           <Box className={styles.headerInfo}>
-            {/* Title with rename controls (teacher only) */}
-            <Box display="flex" alignItems="center" gap={1}>
-              {!isEditingName ? (
-                <>
-                  <Typography variant="h4" component="h1" className={styles.title}>
-                    {classroomData.name}
-                  </Typography>
-                  {canEdit && (
-                    <Tooltip title="Rename class">
-                      <IconButton
-                        size="small"
-                        onClick={() => setIsEditingName(true)}
-                        aria-label="edit class name"
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </>
-              ) : (
-                <>
-                  <TextField
-                    size="small"
-                    value={pendingName}
-                    onChange={(e) => setPendingName(e.target.value)}
-                    inputProps={{ maxLength: 100 }}
-                    autoFocus
-                  />
-                  <Tooltip title="Save">
-                    <IconButton
-                      size="small"
-                      aria-label="save class name"
-                      onClick={async () => {
-                        const newName = (pendingName || '').trim();
-                        if (!newName) return;
-                        const ok = await renameClassroom(classroomData.id, newName);
-                        if (ok?.success || ok === true) {
-                          setIsEditingName(false);
-                          // optimistic local update
-                          setClassroomData((prev) => (prev ? { ...prev, name: newName } : prev));
-                        }
-                      }}
-                      disabled={!pendingName.trim()}
-                    >
-                      <CheckIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Cancel">
-                    <IconButton
-                      size="small"
-                      aria-label="cancel rename"
-                      onClick={() => {
-                        setPendingName(classroomData?.name || '');
-                        setIsEditingName(false);
-                      }}
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </>
-              )}
-            </Box>
-
+            <Typography variant="h4" component="h1" className={styles.title}>
+              {classroomData.name}
+            </Typography>
             <Box className={styles.headerMeta}>
               <Chip icon={<School />} label={classroomData.subject} color="primary" className={styles.subjectChip} />
               <Chip icon={<Group />} label={classroomData.user_role} color="secondary" className={styles.roleChip} />
@@ -388,190 +298,96 @@ export default function ClassroomView() {
           )}
         </Paper>
 
-                {/* Registered Devices */}
-        <Paper elevation={2} className={styles.classroomContent} style={{ marginTop: 24 }}>
-          <Box className={styles.contentHeader}>
-            <Typography variant="h5" component="h2" className={styles.contentTitle}>
-              Registered Devices
-            </Typography>
-          </Box>
+        {/* Conditional Content: IoT Data for Students, Enrolled Students for Teachers */}
+        {isStudent ? (
+          <>
+            <StudentGroupInfo classroomId={wantedId} />
+            <IoTDataVisualization />
+          </>
+        ) : (
+          /* Enrolled Students - Teachers Only */
+          <Paper elevation={2} className={styles.classroomContent} style={{ marginTop: 24 }}>
+            <Box className={styles.contentHeader} display="flex" alignItems="center" justifyContent="space-between">
+              <Typography variant="h5" component="h2" className={styles.contentTitle}>
+                Enrolled Students
+              </Typography>
 
-          {/* Placeholder device data state */}
-          {/* Replace this with real fetch logic */}
-          <DeviceTable classroomId={wantedId} />
-        </Paper>
-
-
-        {/* Enrolled Students */}
-        <Paper elevation={2} className={styles.classroomContent} style={{ marginTop: 24 }}>
-          <Box className={styles.contentHeader} display="flex" alignItems="center" justifyContent="space-between">
-            <Typography variant="h5" component="h2" className={styles.contentTitle}>
-              Enrolled Students
-            </Typography>
-
-            <Box display="flex" alignItems="center" gap={8}>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6 }}>
-                <option value="joined_at">Join date</option>
-                <option value="user_id">Username</option>
-              </select>
-              <select value={order} onChange={(e) => setOrder(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6 }}>
-                <option value="asc">Asc</option>
-                <option value="desc">Desc</option>
-              </select>
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  // re-trigger members fetch by toggling dependent state
-                  setOrder((o) => (o === 'asc' ? 'asc' : 'desc'));
-                }}
-              >
-                Refresh
-              </Button>
+              <Box display="flex" alignItems="center" gap={8}>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6 }}>
+                  <option value="joined_at">Join date</option>
+                  <option value="user_id">Username</option>
+                </select>
+                <select value={order} onChange={(e) => setOrder(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6 }}>
+                  <option value="asc">Asc</option>
+                  <option value="desc">Desc</option>
+                </select>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    // Trigger refetch by toggling a dependency:
+                    // simply re-setting state will re-run the effect since sort/order are deps.
+                    setOrder((o) => (o === 'asc' ? 'asc' : 'desc'));
+                  }}
+                >
+                  Refresh
+                </Button>
+              </Box>
             </Box>
-          </Box>
 
-          {/* member states */}
-          {memberLoading && (
-            <Box display="flex" alignItems="center" gap={1} mt={2}>
-              <CircularProgress size={20} />
-              <Typography>Loading students…</Typography>
-            </Box>
-          )}
+            {/* States: loading / error / empty / data */}
+            {memberLoading && (
+              <Box display="flex" alignItems="center" gap={1} mt={2}>
+                <CircularProgress size={20} />
+                <Typography>Loading students…</Typography>
+              </Box>
+            )}
 
-          {!memberLoading && memberError && <Alert severity="error" sx={{ mt: 2 }}>{memberError}</Alert>}
+            {!memberLoading && memberError && <Alert severity="error" sx={{ mt: 2 }}>{memberError}</Alert>}
 
-          {!memberLoading && !memberError && members.length === 0 && (
-            <Alert severity="info" sx={{ mt: 2 }}>No students enrolled yet.</Alert>
-          )}
+            {!memberLoading && !memberError && sortedMembers.length === 0 && (
+              <Alert severity="info" sx={{ mt: 2 }}>No students enrolled yet.</Alert>
+            )}
 
-          {!memberLoading && !memberError && members.length > 0 && (
-            <TableContainer sx={{ mt: 2 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Full name</TableCell>
-                    <TableCell>Username</TableCell>
-                    <TableCell>Join date</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {members.map((s, idx) => (
-                    <TableRow key={idx} hover>
-                      <TableCell>{s.full_name}</TableCell>
-                      <TableCell>{s.username}</TableCell>
-                      <TableCell>{s.join_date ? new Date(s.join_date).toLocaleString() : '—'}</TableCell>
+            {!memberLoading && !memberError && sortedMembers.length > 0 && (
+              <TableContainer sx={{ mt: 2 }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Full name</TableCell>
+                      <TableCell>Username</TableCell>
+                      <TableCell>Join date</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </Paper>
+                  </TableHead>
+                  <TableBody>
+                    {sortedMembers.map((s, idx) => (
+                      <TableRow key={idx} hover>
+                        <TableCell>{s.full_name}</TableCell>
+                        <TableCell>{s.username}</TableCell>
+                        <TableCell>{s.join_date ? new Date(s.join_date).toLocaleString() : '—'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Paper>
+        )}
 
-        {/* Placeholder for future classroom features */}
-        <Paper elevation={2} className={styles.featuresPlaceholder}>
-          <Typography variant="h5" component="h2" className={styles.placeholderTitle}>
-            Classroom Features Coming Soon
-          </Typography>
-          <Typography variant="body1" className={styles.placeholderText}>
-            This classroom will soon include features like assignments, discussions,
-            and interactive learning tools. Stay tuned for updates!
-          </Typography>
-        </Paper>
+        {/* Anonymous Student Manager - Teachers Only */}
+        {isTeacher && wantedId && (
+          <AnonymousStudentManager classroomId={wantedId} />
+        )}
+
+        {/* Group Management - Teachers Only */}
+        {isTeacher && wantedId && (
+          <GroupManager classroomId={wantedId} />
+        )}
+
+        {/* Device Management - Teachers Only */}
+        {isTeacher && wantedId && (
+          <ClassroomDeviceManager classroomId={wantedId} />
+        )}
       </Container>
     </Box>
   );
 }
-
-function DeviceTable({ classroomId }) {
-  const [deviceLoading, setDeviceLoading] = useState(false);
-  const [deviceError, setDeviceError] = useState('');
-  const [devices, setDevices] = useState([]);
-
-  const [linking, setLinking] = useState(false);
-  const [macAddr, setMacAddr] = useState('');
-  const [deviceName, setDeviceName] = useState('');
-  const [linkError, setLinkError] = useState('');
-  const [linkSuccess, setLinkSuccess] = useState('');
-  const navigate = useNavigate();
-
-  const fetchDevices = async () => {
-  setDeviceLoading(true);
-  setDeviceError('');
-  try {
-    console.log(classroomId);
-    const resp = await client.get(`/device/get/${classroomId}`);
-    console.log('⚠️ Device API Response:', JSON.stringify(resp, null, 2)); // 👈 FULL LOG
-
-    const list = resp?.data?.data || [];
-    setDevices(list);
-  } catch (e) {
-    setDeviceError(e?.message || 'Failed to load devices');
-    setDevices([]);
-  } finally {
-    setDeviceLoading(false);
-  }
-};
-
-
-  useEffect(() => {
-    if (!classroomId) return;
-    fetchDevices();
-  }, [classroomId]);
-
-  return (
-    <>
-<Box display="flex" flexDirection="column" gap={2} mt={2}>
-  <Button
-    variant="contained"
-    size="small"
-    startIcon={<Add />}
-    onClick={() =>
-      navigate('/link-device', {
-        state: { class_id: classroomId }
-      })
-    }
-    sx={{
-      minWidth: 'auto',
-      padding: '8px 16px',  // Increased from '4px 8px' (vertical, horizontal)
-      fontSize: '0.75rem',
-      alignSelf: 'flex-end'
-    }}
-  >
-    Link Device
-  </Button>
-</Box>
-      {/* Devices table */}
-      {deviceLoading ? (
-        <Box display="flex" alignItems="center" gap={1} mt={2}>
-          <CircularProgress size={20} />
-          <Typography>Loading devices…</Typography>
-        </Box>
-      ) : deviceError ? (
-        <Alert severity="error" sx={{ mt: 2 }}>{deviceError}</Alert>
-      ) : devices.length === 0 ? (
-        <Alert severity="info" sx={{ mt: 2 }}>No devices registered yet.</Alert>
-      ) : (
-        <TableContainer sx={{ mt: 4 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>MAC Address</TableCell>
-                <TableCell>Device Name</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {devices.map((device, idx) => (
-                <TableRow key={idx} hover>
-                  <TableCell>{device.mac_addr}</TableCell>
-                  <TableCell>{device.device_name || '—'}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </>
-  );
-}
-
