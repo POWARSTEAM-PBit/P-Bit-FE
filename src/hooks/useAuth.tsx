@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
 import { ApiResp } from "../api/int";
 import client from "../api/client";
-import { AxiosResponse } from "axios";
 
 /**
  * @brief The following interface, describes a user type
@@ -54,24 +53,50 @@ export interface RegisterInput {
 type LoginResponse = ApiResp<LoginData>;
 type RegisterResponse = ApiResp<null>;
 
-/**
- * @brief Custom React hook to handle user authentication logic.
- * @returns Object containing user state, login status, and auth functions.
- */
-export function useAuth() {
+interface AuthContextType {
+    user: User | null;
+    token: string | null;
+    isLoggedIn: boolean;
+    loading: boolean;
+    login: (data: LoginInput) => Promise<LoginResponse>;
+    register: (data: RegisterInput) => Promise<RegisterResponse>;
+    logout: () => void;
+    fetchUserProfile: (authToken?: string) => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+interface AuthProviderProps {
+    children: ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(() => {
         // Initialize from localStorage
         return localStorage.getItem('token');
     });
     const [loading, setLoading] = useState(false);
+    
+    // Use ref to prevent multiple calls
+    const profileFetched = useRef(false);
+    const isInitialized = useRef(false);
 
     // Initialize user profile if token exists on app start
     useEffect(() => {
-        if (token && !user) {
-            fetchUserProfile(token);
-        }
-    }, [token, user]);
+        if (isInitialized.current) return; // Prevent re-runs in strict mode
+        isInitialized.current = true;
+        
+        const initializeAuth = async () => {
+            const storedToken = localStorage.getItem('token');
+            if (storedToken && !user && !profileFetched.current) {
+                profileFetched.current = true;
+                await fetchUserProfile(storedToken);
+            }
+        };
+        
+        initializeAuth();
+    }, []); // Only run once on mount
 
     /**
      * @brief Logs a user in using OAuth2 form-based authentication.
@@ -95,9 +120,9 @@ export function useAuth() {
 
             if (res.success && res.data?.access_token) {
                 setToken(res.data.access_token);
-                // Store token in localStorage
                 localStorage.setItem('token', res.data.access_token);
-                // Fetch user profile after successful login
+                // Fetch user profile immediately after login
+                profileFetched.current = true; // Prevent useEffect from calling it again
                 await fetchUserProfile(res.data.access_token);
             }
 
@@ -122,6 +147,14 @@ export function useAuth() {
                 return;
             }
 
+            // Add this check to prevent duplicate calls
+            if (profileFetched.current && !authToken) {
+                console.log('Profile already fetched, skipping');
+                return;
+            }
+
+            console.log('Fetching user profile...'); // Debug log
+            
             const response = await client.get("/user/profile", {
                 headers: {
                     'Authorization': `Bearer ${tokenToUse}`,
@@ -144,7 +177,6 @@ export function useAuth() {
             }
         }
     };
-
 
     /**
      * @brief Registers a new user using the provided information.
@@ -177,7 +209,36 @@ export function useAuth() {
         setUser(null);
         setToken(null);
         localStorage.removeItem('token');
+        profileFetched.current = false; // Reset the flag
+        isInitialized.current = false; // Reset initialization flag
     };
 
-    return { user, token, isLoggedIn, loading, login, register, logout, fetchUserProfile };
+    const value: AuthContextType = {
+        user,
+        token,
+        isLoggedIn,
+        loading,
+        login,
+        register,
+        logout,
+        fetchUserProfile
+    };
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
+}
+
+/**
+ * @brief Custom React hook to access authentication context.
+ * @returns AuthContextType object containing user state and auth functions.
+ */
+export function useAuth(): AuthContextType {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 }
