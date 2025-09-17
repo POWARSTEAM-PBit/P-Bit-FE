@@ -14,6 +14,8 @@ import {
 import { Login, School, Group } from "@mui/icons-material";
 import { useAuth } from "../../../hooks/useAuth";
 import styles from "./LoginForm.module.css";
+import loginBackground from '../../../../public/images/LoginBackground.jpg'; // update as per location
+
 
 export default function LoginForm({ mode }) {
   const [userId, setUserId] = useState("");
@@ -48,7 +50,11 @@ export default function LoginForm({ mode }) {
   const isStudent = mode === "student";
 
   return (
-    <Box className={styles.container}>
+    <Box className={styles.container}
+    style={{backgroundImage: `url(${loginBackground})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',}}>
       <Paper elevation={3} className={styles.paper}>
         <Card className={styles.card}>
           <CardContent className={styles.cardContent}>
