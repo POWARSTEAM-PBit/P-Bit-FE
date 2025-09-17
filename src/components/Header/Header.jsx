@@ -10,32 +10,24 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import Avatar from '@mui/material/Avatar';
+import CircularProgress from '@mui/material/CircularProgress';
 import styles from './Header.module.css';
-import { useAuth } from "../../hooks/useAuth";
-
-const pages = [
-  { name: 'Home', path: '/' },
-  { name: 'Login', path: '/login-student' },
-  { name: 'Register', path: '/register' },
-  { name: 'Create Class', path: '/create-class' }
-];
+import { useAuth } from '../../hooks/useAuth';
 
 export default function Header() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElProfile, setAnchorElProfile] = React.useState(null);
-
-  const { isLoggedIn, user, logout } = useAuth();
+  const { isLoggedIn, user, logout, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Force re-render when auth state changes
+  // Pages for navigation, filtered based on auth state and role
   const userRole = user?.role || user?.user_type;
-
   const pages = [
-    { name: 'Dashboard', path: '/dashboard' },
+    { name: 'Dashboard', path: '/dashboard', show: isLoggedIn },
     { name: 'Create Classroom', path: '/create-classroom', show: isLoggedIn && userRole === 'teacher' },
-    { name: 'Join Classroom', path: '/join-classroom' },
+    { name: 'Join Classroom', path: '/join-classroom', show: true },
     { name: 'Login', path: '/login-student', show: !isLoggedIn },
-    { name: 'Register', path: '/register', show: !isLoggedIn }
+    { name: 'Register', path: '/register', show: !isLoggedIn },
   ].filter(page => page.show !== false);
 
   const handleOpenNavMenu = (e) => setAnchorElNav(e.currentTarget);
@@ -44,11 +36,16 @@ export default function Header() {
   const handleOpenProfileMenu = (e) => setAnchorElProfile(e.currentTarget);
   const handleCloseProfileMenu = () => setAnchorElProfile(null);
 
+  const handleLogout = () => {
+    handleCloseProfileMenu();
+    logout();
+    navigate('/login-student');
+  };
+
   return (
     <AppBar position="static" className={styles.appBar}>
       <Toolbar className={styles.toolbar}>
-
-        {/* LEFT: Logo & Mobile Hamburger */}
+        {/* Left: Logo & Mobile Hamburger */}
         <Box className={styles.left}>
           <Typography
             variant="h6"
@@ -98,10 +95,19 @@ export default function Header() {
           </Typography>
         </Box>
 
-        {/* RIGHT: Authenticated / Unauthenticated User Actions */}
+        {/* Right: Navigation & Profile */}
         <Box className={styles.right}>
-          {isLoggedIn ? (
+          {loading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : isLoggedIn ? (
             <>
+              <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
+                {pages.map((page) => (
+                  <Link key={page.name} to={page.path} className={styles.navButton}>
+                    <Button color="inherit">{page.name}</Button>
+                  </Link>
+                ))}
+              </Box>
               <IconButton onClick={handleOpenProfileMenu} color="inherit">
                 <Avatar alt={user?.first_name || user?.name} src="/static/images/avatar/1.jpg" />
               </IconButton>
@@ -112,33 +118,25 @@ export default function Header() {
                 open={Boolean(anchorElProfile)}
                 onClose={handleCloseProfileMenu}
               >
-                <MenuItem onClick={() => { handleCloseProfileMenu(); navigate('/profile'); }}>Profile</MenuItem>
-                <MenuItem onClick={handleCloseProfileMenu}>Settings</MenuItem>
-                <MenuItem onClick={() => { handleCloseProfileMenu(); logout(); }}>Logout</MenuItem>
+                <MenuItem onClick={() => { handleCloseProfileMenu(); navigate('/profile'); }}>
+                  Profile
+                </MenuItem>
+                <MenuItem onClick={() => { handleCloseProfileMenu(); navigate('/settings'); }}>
+                  Settings
+                </MenuItem>
+                <MenuItem onClick={handleLogout}>Logout</MenuItem>
               </Menu>
-              <Button
-                color="inherit"
-                onClick={() => {
-                  logout();
-                  navigate('/login-student');
-                }}
-                className={styles.navButton}
-              >
-                Logout
-              </Button>
             </>
           ) : (
-            <>
-              <Link to="/login-student" className={styles.navButton}>
-                <Button color="inherit">Login</Button>
-              </Link>
-              <Link to="/register" className={styles.navButton}>
-                <Button color="inherit">Register</Button>
-              </Link>
-            </>
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
+              {pages.map((page) => (
+                <Link key={page.name} to={page.path} className={styles.navButton}>
+                  <Button color="inherit">{page.name}</Button>
+                </Link>
+              ))}
+            </Box>
           )}
         </Box>
-
       </Toolbar>
     </AppBar>
   );

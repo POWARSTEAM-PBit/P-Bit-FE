@@ -16,6 +16,7 @@ import {
 import { School, Group, PersonAdd } from '@mui/icons-material';
 import { useAuth } from "../../../hooks/useAuth";
 import styles from "./RegisterForm.module.css";
+import loginBackground from '../../../../public/images/LoginBackground.jpg'; // update as per location
 
 /**
  * @brief User register form.
@@ -111,7 +112,16 @@ export default function RegisterForm() {
   };
 
   return (
-    <Box className={styles.container}>
+    <Box
+  className={styles.container}
+  style={{
+    backgroundImage: `url(${loginBackground})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  }}
+>
+
       <Paper elevation={3} className={styles.paper}>
         <Card className={styles.card}>
           <CardContent className={styles.cardContent}>

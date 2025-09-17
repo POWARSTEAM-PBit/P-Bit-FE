@@ -14,6 +14,8 @@ import {
 import { Login, School, Group } from "@mui/icons-material";
 import { useAuth } from "../../../hooks/useAuth";
 import styles from "./LoginForm.module.css";
+import loginBackground from '../../../../public/images/LoginBackground.jpg'; // update as per location
+
 
 export default function LoginForm({ mode }) {
   const [userId, setUserId] = useState("");
@@ -48,8 +50,12 @@ export default function LoginForm({ mode }) {
   const isStudent = mode === "student";
 
   return (
-    <Box className={styles.container}>
-      <Paper elevation={0} className={styles.paper}>
+    <Box className={styles.container}
+    style={{backgroundImage: `url(${loginBackground})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',}}>
+      <Paper elevation={3} className={styles.paper}>
         <Card className={styles.card}>
           <CardContent className={styles.cardContent}>
             <Box className={styles.header}>
@@ -72,8 +78,8 @@ export default function LoginForm({ mode }) {
             <form onSubmit={handleSubmit} className={styles.form}>
               <TextField
                 fullWidth
-                size="small"
-                margin="dense"
+                size="medium"
+                margin="normal"
                 label={isStudent ? "Username" : "Email Address"}
                 type={isStudent ? "text" : "email"}
                 value={userId}
@@ -82,12 +88,13 @@ export default function LoginForm({ mode }) {
                 placeholder={isStudent ? "Enter your username" : "you@example.com"}
                 autoComplete={isStudent ? "username" : "email"}
                 required
+                variant="outlined"
               />
 
               <TextField
                 fullWidth
-                size="small"
-                margin="dense"
+                size="medium"
+                margin="normal"
                 label="Password"
                 type="password"
                 value={password}
@@ -96,6 +103,7 @@ export default function LoginForm({ mode }) {
                 placeholder="Enter your password"
                 autoComplete="current-password"
                 required
+                variant="outlined"
               />
 
               <Button
@@ -106,36 +114,33 @@ export default function LoginForm({ mode }) {
                 className={styles.submitButton}
                 startIcon={!loading ? <Login /> : null}
               >
-                {loading ? <CircularProgress size={20} /> : "Log in"}
+                {loading ? <CircularProgress size={24} color="inherit" /> : "Log In"}
               </Button>
             </form>
 
-            <Box className={styles.registerPrompt}>
+            <Box className={styles.links}>
               <Typography variant="body2" color="text.secondary">
                 {isStudent ? "Are you a teacher?" : "Are you a student?"}
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => navigate(isStudent ? "/login-teacher" : "/login-student")}
+                  className={styles.link}
+                >
+                  Login here
+                </Button>
               </Typography>
-              <Button
-                variant="text"
-                size="small"
-                onClick={() => navigate(isStudent ? "/login-teacher" : "/login-student")}
-                className={styles.link}
-              >
-                Login here
-              </Button>
-            </Box>
-
-            <Box className={styles.registerPrompt}>
               <Typography variant="body2" color="text.secondary">
                 Don’t have an account?
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => navigate("/register")}
+                  className={styles.link}
+                >
+                  Create one
+                </Button>
               </Typography>
-              <Button
-                variant="text"
-                size="small"
-                onClick={() => navigate("/register")}
-                className={styles.link}
-              >
-                Create one
-              </Button>
             </Box>
           </CardContent>
         </Card>
