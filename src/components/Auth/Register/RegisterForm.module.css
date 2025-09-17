@@ -7,11 +7,6 @@
   min-height: 100vh;
 
   padding: 1.5rem;
-
-  background-image: url('/images/LoginBackground.jpg'); /* Use correct path */
-  background-size: cover;                 /* Resize to cover the container */
-  background-position: center;            /* Center the image */
-  background-repeat: no-repeat;           /* Don't repeat it */
 }
 
 /* card shell */
