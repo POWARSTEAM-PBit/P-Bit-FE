@@ -4,10 +4,10 @@
 
         export default defineConfig({
           server: {
-            // https: {
-            //   key: fs.readFileSync('./ssl/192.168.1.44-key.pem'),
-            //   cert: fs.readFileSync('./ssl/192.168.1.44.pem'),
-            // },
+            https: {
+              key: fs.readFileSync('./ssl/192.168.1.44-key.pem'),
+              cert: fs.readFileSync('./ssl/192.168.1.44.pem'),
+            },
           },
           plugins: [react()],
         });

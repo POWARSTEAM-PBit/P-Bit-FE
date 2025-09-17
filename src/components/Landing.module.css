@@ -1,0 +1,94 @@
+.container {
+  background-color: #fafafa;
+  min-height: 100vh;
+  padding: 2rem 0;
+}
+
+.heroSection {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: linear-gradient(120deg, #0288d1 0%, #4fc3f7 100%);
+  border-radius: 16px;
+  color: white;
+  margin-bottom: 2rem;
+}
+
+.heroTitle {
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.heroSubtitle {
+  font-weight: 400;
+  opacity: 0.9;
+  margin-bottom: 1.5rem;
+}
+
+.heroActions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.heroButton {
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+}
+
+.heroAvatar {
+  background-color: white !important;
+  color: #0288d1 !important;
+  margin: 1rem auto;
+}
+
+.accordion {
+  background-color: white !important;
+  border-radius: 8px !important;
+  margin-bottom: 1rem !important;
+}
+
+.featureCard {
+  transition: transform 0.2s ease-in-out;
+}
+
+.featureCard:hover {
+  transform: translateY(-4px);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.updatesSection {
+  padding: 1.5rem;
+  border-radius: 8px;
+  background-color: white;
+  height: 100%;
+}
+
+.sectionTitle {
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.updateItem {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.updateHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.updateButton {
+  text-transform: none !important;
+  margin-top: 0.5rem;
+}

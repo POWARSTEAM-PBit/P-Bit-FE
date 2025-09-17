@@ -4,6 +4,7 @@ import StudentLoginPage from './pages/StudentLoginPage';
 import TeacherLoginPage from './pages/TeacherLoginPage';
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from './pages/DashboardPage';
+import LandingPage from './pages/LandingPage';
 import CreateClassroomPage from './pages/CreateClassroomPage';
 import JoinClassroomPage from './pages/JoinClassroomPage';
 import ClassroomPage from './pages/ClassroomPage';
@@ -19,7 +20,7 @@ export default function App() {
       <ClassroomProvider>
         <Header />
         <Routes>
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/login-student" element={<StudentLoginPage />} />
           <Route path="/login-teacher" element={<TeacherLoginPage />} />
