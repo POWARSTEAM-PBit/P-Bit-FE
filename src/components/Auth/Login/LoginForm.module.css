@@ -1,142 +1,187 @@
-/* ===== Page container ===== */
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 64px);
-  padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+
+  padding: 1.5rem;
+
+  background-image: url('/images/LoginBackground.jpg'); /* Use correct path */
+  background-size: cover;                 /* Resize to cover the container */
+  background-position: center;            /* Center the image */
+  background-repeat: no-repeat;           /* Don't repeat it */
 }
 
-/* ===== Card box ===== */
-.paper,
+
+.paper {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
 .card {
   width: 100%;
-  max-width: 400px;              /* compact width */
-  border-radius: 14px;
-  overflow: hidden;
+  border-radius: 20px;
   border: none;
-  box-shadow: none;
 }
 
-/* ===== Inner padding ===== */
 .cardContent {
-  padding: 22px 18px 18px;       /* a bit more space on top */
+  padding: 1.5rem;
 }
 
-/* ===== Header (icon + title) ===== */
 .header {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 4px;               /* leave some top breathing room */
-  margin-bottom: 12px;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .icon {
-  font-size: 20px !important;    /* smaller icon */
-  color: #667eea;
+  font-size: 2rem !important;
+  color: #1976d2;
 }
 
 .title {
-  color: #2c3e50;
+  color: #1a3c6c;
   font-weight: 600 !important;
+  font-size: 1.5rem !important;
   text-align: center;
-  font-size: 19px !important;    /* smaller title */
-  line-height: 1.25;
 }
 
-/* ===== Alerts ===== */
 .alert {
-  margin-bottom: 12px;
-  border-radius: 8px;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  background: #fff1f1;
+  color: #d32f2f;
+  font-size: 0.85rem;
 }
 
-/* ===== Form layout ===== */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 10px;                     /* tighter vertical rhythm */
+  gap: 1rem;
 }
 
-/* ===== TextField sizing ===== */
 .textField .MuiOutlinedInput-root {
-  border-radius: 8px;
-  height: 38px;                  /* shorter input height */
-  font-size: 13.5px;             /* input text size */
+  border-radius: 12px;
+  background: #fafafa;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* label font-size for MUI */
 .textField .MuiInputLabel-root {
-  font-size: 13px;               /* label text size */
+  font-size: 0.9rem;
+  color: #546e7a;
 }
+
 .textField .MuiInputLabel-root.Mui-focused {
-  font-size: 12.5px;
+  color: #1976d2;
 }
 
-/* focus/hover colors */
 .textField .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-  border-color: #667eea;
+  border-color: #1976d2;
 }
+
 .textField .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #667eea;
+  border-color: #1976d2;
+  border-width: 2px;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
 }
 
-/* ===== Submit button ===== */
 .submitButton {
-  margin-top: 6px;
-  padding: 9px 14px;             /* smaller button */
-  border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  font-weight: 600;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: #1976d2 !important;
+  font-weight: 500;
+  font-size: 0.95rem;
   text-transform: none;
-  font-size: 14px;               /* smaller label */
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);
 }
+
 .submitButton:hover {
+  background: #1565c0 !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.28);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
 }
+
 .submitButton:disabled {
-  transform: none;
+  background: #b0bec5 !important;
   box-shadow: none;
+  transform: none;
 }
 
-/* ===== Bottom link rows ===== */
-.switchPrompt,
-.registerPrompt {
+.links {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 12.5px;             /* smaller helper text */
-  line-height: 1.4;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  font-size: 0.85rem;
 }
-.switchPrompt {
-  margin-top: 12px;
-  padding-top: 8px;
-  border-top: 1px solid #ecf0f1;
-}
-.registerPrompt { margin-top: 6px; }
 
-/* link look */
 .link {
-  color: #667eea !important;
+  color: #1976d2 !important;
   font-weight: 500;
   text-transform: none;
-  font-size: 12.5px !important;  /* match helper text */
+  font-size: 0.85rem !important;
+  margin-left: 0.25rem;
 }
-.link:hover { background-color: rgba(102,126,234,0.1) !important; }
 
-/* ===== Responsive ===== */
+.link:hover {
+  color: #0d47a1 !important;
+  background: transparent !important;
+}
+
 @media (max-width: 768px) {
-  .paper, .card { max-width: 360px; }
-  .cardContent { padding: 18px 16px; }
-  .title { font-size: 18px !important; }
-  .icon { font-size: 18px !important; }
+  .paper {
+    max-width: 360px;
+    border-radius: 16px;
+  }
+  .card {
+    border-radius: 16px;
+  }
+  .cardContent {
+    padding: 1.25rem;
+  }
+  .title {
+    font-size: 1.35rem !important;
+  }
+  .icon {
+    font-size: 1.75rem !important;
+  }
+  .textField .MuiOutlinedInput-root {
+    border-radius: 10px;
+  }
+  .submitButton {
+    border-radius: 10px;
+  }
+  .alert {
+    border-radius: 10px;
+  }
 }
 
 @media (max-width: 480px) {
-  .paper, .card { max-width: 92vw; }
+  .paper {
+    max-width: 90vw;
+    border-radius: 20px;
+  }
+  .card {
+    border-radius: 20px;
+  }
+  .cardContent {
+    padding: 1rem;
+  }
+  .textField .MuiOutlinedInput-root {
+    border-radius: 8px;
+  }
+  .submitButton {
+    border-radius: 8px;
+  }
+  .alert {
+    border-radius: 8px;
+  }
 }
