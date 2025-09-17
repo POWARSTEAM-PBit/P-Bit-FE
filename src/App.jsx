@@ -10,7 +10,7 @@ import ClassroomPage from './pages/ClassroomPage';
 import ProfilePage from './pages/ProfilePage';
 import { ClassroomProvider } from './contexts/ClassroomContext';
 import { AuthProvider } from './hooks/useAuth'; // Import the AuthProvider
-import ConnectionPage from './pages/Connection';
+import ConnectionPage from './pages/ConnectionPage';
 import LinkDevice from './pages/LinkDevicePage';
 
 export default function App() {
