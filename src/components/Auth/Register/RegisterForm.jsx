@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -11,10 +11,12 @@ import {
   CircularProgress,
   Paper,
   ToggleButtonGroup,
-  ToggleButton
+  ToggleButton,
+  Autocomplete
 } from '@mui/material';
 import { School, Group, PersonAdd } from '@mui/icons-material';
 import { useAuth } from "../../../contexts/AuthContext";
+import client from "../../../api/client";
 import styles from "./RegisterForm.module.css";
 
 /**
@@ -28,10 +30,13 @@ export default function RegisterForm() {
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [school, setSchool] = useState("");
 
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [errors, setErrors] = useState({});
+  const [schoolOptions, setSchoolOptions] = useState([]);
+  const [schoolLoading, setSchoolLoading] = useState(false);
 
   const { register, loading } = useAuth();
   const navigate = useNavigate();
@@ -53,6 +58,10 @@ export default function RegisterForm() {
       newErrors.userId = 'Please enter a valid email address';
     }
     
+    if (userType === 'teacher' && !school.trim()) {
+      newErrors.school = 'School name is required for teachers';
+    }
+    
     if (!password) {
       newErrors.password = 'Password is required';
     } else if (password.length < 6) {
@@ -65,6 +74,43 @@ export default function RegisterForm() {
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // Fetch schools for autocomplete
+  const fetchSchools = async (searchTerm = "") => {
+    setSchoolLoading(true);
+    try {
+      const response = await client.get('/user/schools', {
+        params: {
+          search: searchTerm,
+          limit: 20
+        }
+      });
+      
+      if (response.data.success) {
+        setSchoolOptions(response.data.data.schools || []);
+      }
+    } catch (error) {
+      console.error('Error fetching schools:', error);
+      setSchoolOptions([]);
+    } finally {
+      setSchoolLoading(false);
+    }
+  };
+
+  // Load initial schools when component mounts
+  useEffect(() => {
+    if (userType === 'teacher') {
+      fetchSchools();
+    }
+  }, [userType]);
+
+  // Handle school input change for autocomplete
+  const handleSchoolInputChange = (event, newValue) => {
+    setSchool(newValue || "");
+    if (newValue && newValue.length > 2) {
+      fetchSchools(newValue);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -84,6 +130,7 @@ export default function RegisterForm() {
         user_type: userType,
         first_name: firstName,
         last_name: lastName,
+        school: userType === 'teacher' ? school : undefined,
       });
 
       if (!res.success) {
@@ -99,6 +146,7 @@ export default function RegisterForm() {
       setConfirmPassword("");
       setFirstName("");
       setLastName("");
+      setSchool("");
 
       // Redirect after short delay
       setTimeout(() => {
@@ -147,6 +195,10 @@ export default function RegisterForm() {
                     if (newValue !== null) {
                       setUserType(newValue);
                       setUserId(""); // Clear user ID when switching types
+                      setSchool(""); // Clear school when switching types
+                      if (newValue === 'teacher') {
+                        fetchSchools(); // Load schools when switching to teacher
+                      }
                     }
                   }}
                   className={styles.toggleGroup}
@@ -198,6 +250,38 @@ export default function RegisterForm() {
                 placeholder={userType === "teacher" ? "you@example.com" : "Enter your username"}
                 required
               />
+
+              {/* School field - only show for teachers */}
+              {userType === "teacher" && (
+                <Autocomplete
+                  freeSolo
+                  options={schoolOptions}
+                  value={school}
+                  onInputChange={handleSchoolInputChange}
+                  loading={schoolLoading}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      fullWidth
+                      label="School Name"
+                      error={!!errors.school}
+                      helperText={errors.school || "Start typing to see existing schools"}
+                      className={styles.textField}
+                      placeholder="Enter your school name"
+                      required
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {schoolLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+              )}
 
               <TextField
                 fullWidth

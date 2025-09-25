@@ -100,7 +100,6 @@ export default function JoinClassroom() {
     if (result.success) {
       // Show a message if user is returning
       if (result.isReturning) {
-        // You could show a toast notification here
         console.log(`Welcome back, ${firstName}!`);
       }
       // Navigate to the joined classroom
