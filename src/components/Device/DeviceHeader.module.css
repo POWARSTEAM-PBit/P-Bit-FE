@@ -1,0 +1,47 @@
+/* Device Header Styles */
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.headerInfo {
+  flex: 1;
+}
+
+.deviceTitle {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #1976d2;
+  margin-bottom: 8px;
+}
+
+.macAddress {
+  font-size: 0.875rem;
+  color: #666;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  margin-bottom: 16px;
+}
+
+.statusChips {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.backButton {
+  margin-left: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .deviceTitle {
+    font-size: 2rem;
+  }
+}
