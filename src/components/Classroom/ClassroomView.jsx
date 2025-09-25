@@ -23,9 +23,7 @@ import { useClassroom } from '../../contexts/ClassroomContext';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from './ClassroomView.module.css';
 
-import { fetchClassMembers } from '../../api/classMembers';
-import IoTDataVisualization from '../IoT/IoTDataVisualization';
-import AnonymousStudentManager from './AnonymousStudentManager';
+import CombinedStudentManager from './CombinedStudentManager';
 import ClassroomDeviceManager from './ClassroomDeviceManager';
 import GroupManager from './GroupManager';
 import StudentGroupInfo from './StudentGroupInfo';
@@ -39,15 +37,8 @@ export default function ClassroomView() {
   const { isLoggedIn, user } = useAuth();
 
   const [classroomData, setClassroomData] = useState(null);
+  const [showSessionRestored, setShowSessionRestored] = useState(false);
 
-  // Members state
-  const [memberLoading, setMemberLoading] = useState(false);
-  const [memberError, setMemberError] = useState('');
-  const [members, setMembers] = useState([]);
-
-  // Sorting state
-  const [sortBy, setSortBy] = useState('joined_at');
-  const [order, setOrder] = useState('asc');
 
   // Normalize route id once
   const wantedId = useMemo(() => String(classroomId ?? ''), [classroomId]);
@@ -56,6 +47,18 @@ export default function ClassroomView() {
   // Check both AuthContext user and classroom user_role (for anonymous students)
   const isStudent = user?.user_type === 'student' || user?.role === 'student' || classroomData?.user_role === 'student';
   const isTeacher = user?.user_type === 'teacher' || user?.role === 'teacher' || classroomData?.user_role === 'teacher';
+
+  // Show session restored notification when a cached session is detected
+  useEffect(() => {
+    if (classroomData?.is_cached) {
+      setShowSessionRestored(true);
+      // Auto-hide after 5 seconds
+      const timer = setTimeout(() => {
+        setShowSessionRestored(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [classroomData?.is_cached]);
   
 
   // Helper to normalize a classroom object's id field
@@ -111,52 +114,6 @@ export default function ClassroomView() {
     };
   }, [wantedId, currentClassroom, classrooms, fetchClassrooms]);
 
-  // Fetch class members from backend (with cleanup to avoid setting state after unmount)
-  useEffect(() => {
-    if (!wantedId) return;
-
-    let cancelled = false;
-
-    async function loadMembers() {
-      setMemberLoading(true);
-      setMemberError('');
-      try {
-        const list = await fetchClassMembers(wantedId, { sort_by: sortBy, order });
-        if (cancelled) return;
-
-        // Map API response to required fields
-        const mapped = (list || []).map((u) => ({
-          full_name: `${(u.first_name || '').trim()} ${(u.last_name || '').trim()}`.trim() || u.user_id,
-          username: u.user_id,
-          join_date: u.joined_at,
-        }));
-        setMembers(mapped);
-      } catch (e) {
-        if (cancelled) return;
-        setMemberError(e?.message || 'Failed to load members');
-        setMembers([]);
-      } finally {
-        if (!cancelled) setMemberLoading(false);
-      }
-    }
-
-    loadMembers();
-    return () => {
-      cancelled = true;
-    };
-  }, [wantedId, sortBy, order]);
-
-  // Local sorting (kept even though server can sort; useful if backend ignores params)
-  const sortedMembers = useMemo(() => {
-    const dir = order === 'asc' ? 1 : -1;
-    return [...members].sort((a, b) => {
-      if (sortBy === 'full_name') return a.full_name.localeCompare(b.full_name) * dir;
-      if (sortBy === 'user_id') return a.username.localeCompare(b.username) * dir;
-      const ta = a.join_date ? new Date(a.join_date).getTime() : 0;
-      const tb = b.join_date ? new Date(b.join_date).getTime() : 0;
-      return (ta - tb) * dir;
-    });
-  }, [members, sortBy, order]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '—';
@@ -234,11 +191,31 @@ export default function ClassroomView() {
             <Box className={styles.headerMeta}>
               <Chip icon={<School />} label={classroomData.subject} color="primary" className={styles.subjectChip} />
               <Chip icon={<Group />} label={classroomData.user_role} color="secondary" className={styles.roleChip} />
+              {classroomData.is_cached && (
+                <Chip 
+                  label="Session Restored" 
+                  color="success" 
+                  variant="outlined" 
+                  size="small"
+                  className={styles.sessionChip}
+                />
+              )}
             </Box>
           </Box>
         </Box>
 
         <Divider className={styles.divider} />
+
+        {/* Session Restored Notification */}
+        {showSessionRestored && (
+          <Alert 
+            severity="success" 
+            onClose={() => setShowSessionRestored(false)}
+            sx={{ mb: 2 }}
+          >
+            🎉 Welcome back, {classroomData.first_name}! Your session has been automatically restored.
+          </Alert>
+        )}
 
         {/* Classroom Info */}
         <Paper elevation={2} className={styles.classroomContent}>
@@ -298,84 +275,12 @@ export default function ClassroomView() {
           )}
         </Paper>
 
-        {/* Conditional Content: IoT Data for Students, Enrolled Students for Teachers */}
+        {/* Conditional Content: Student Info for Students, Student Management for Teachers */}
         {isStudent ? (
-          <>
-            <StudentGroupInfo classroomId={wantedId} />
-            <IoTDataVisualization />
-          </>
+          <StudentGroupInfo classroomId={wantedId} />
         ) : (
-          /* Enrolled Students - Teachers Only */
-          <Paper elevation={2} className={styles.classroomContent} style={{ marginTop: 24 }}>
-            <Box className={styles.contentHeader} display="flex" alignItems="center" justifyContent="space-between">
-              <Typography variant="h5" component="h2" className={styles.contentTitle}>
-                Enrolled Students
-              </Typography>
-
-              <Box display="flex" alignItems="center" gap={8}>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6 }}>
-                  <option value="joined_at">Join date</option>
-                  <option value="user_id">Username</option>
-                </select>
-                <select value={order} onChange={(e) => setOrder(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6 }}>
-                  <option value="asc">Asc</option>
-                  <option value="desc">Desc</option>
-                </select>
-                <Button
-                  variant="outlined"
-                  onClick={() => {
-                    // Trigger refetch by toggling a dependency:
-                    // simply re-setting state will re-run the effect since sort/order are deps.
-                    setOrder((o) => (o === 'asc' ? 'asc' : 'desc'));
-                  }}
-                >
-                  Refresh
-                </Button>
-              </Box>
-            </Box>
-
-            {/* States: loading / error / empty / data */}
-            {memberLoading && (
-              <Box display="flex" alignItems="center" gap={1} mt={2}>
-                <CircularProgress size={20} />
-                <Typography>Loading students…</Typography>
-              </Box>
-            )}
-
-            {!memberLoading && memberError && <Alert severity="error" sx={{ mt: 2 }}>{memberError}</Alert>}
-
-            {!memberLoading && !memberError && sortedMembers.length === 0 && (
-              <Alert severity="info" sx={{ mt: 2 }}>No students enrolled yet.</Alert>
-            )}
-
-            {!memberLoading && !memberError && sortedMembers.length > 0 && (
-              <TableContainer sx={{ mt: 2 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Full name</TableCell>
-                      <TableCell>Username</TableCell>
-                      <TableCell>Join date</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {sortedMembers.map((s, idx) => (
-                      <TableRow key={idx} hover>
-                        <TableCell>{s.full_name}</TableCell>
-                        <TableCell>{s.username}</TableCell>
-                        <TableCell>{s.join_date ? new Date(s.join_date).toLocaleString() : '—'}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </Paper>
-        )}
-
-        {/* Anonymous Student Manager - Teachers Only */}
-        {isTeacher && wantedId && (
-          <AnonymousStudentManager classroomId={wantedId} />
+          /* Combined Student Management - Teachers Only */
+          <CombinedStudentManager classroomId={wantedId} />
         )}
 
         {/* Group Management - Teachers Only */}

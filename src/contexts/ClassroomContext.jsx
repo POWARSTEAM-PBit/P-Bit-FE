@@ -2,6 +2,50 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { useAuth } from './AuthContext';
 import client from '../api/client';
 
+// Anonymous student session management
+const ANONYMOUS_SESSION_KEY = 'pbit_anonymous_session';
+
+const saveAnonymousSession = (sessionData) => {
+  try {
+    localStorage.setItem(ANONYMOUS_SESSION_KEY, JSON.stringify({
+      ...sessionData,
+      timestamp: Date.now()
+    }));
+  } catch (error) {
+    console.warn('Failed to save anonymous session:', error);
+  }
+};
+
+const getAnonymousSession = () => {
+  try {
+    const sessionData = localStorage.getItem(ANONYMOUS_SESSION_KEY);
+    if (!sessionData) return null;
+    
+    const parsed = JSON.parse(sessionData);
+    
+    // Check if session is still valid (24 hours)
+    const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    if (Date.now() - parsed.timestamp > SESSION_DURATION) {
+      clearAnonymousSession();
+      return null;
+    }
+    
+    return parsed;
+  } catch (error) {
+    console.warn('Failed to get anonymous session:', error);
+    clearAnonymousSession();
+    return null;
+  }
+};
+
+const clearAnonymousSession = () => {
+  try {
+    localStorage.removeItem(ANONYMOUS_SESSION_KEY);
+  } catch (error) {
+    console.warn('Failed to clear anonymous session:', error);
+  }
+};
+
 const ClassroomContext = createContext();
 
 export const useClassroom = () => {
@@ -19,12 +63,62 @@ export const ClassroomProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const { user, isLoggedIn } = useAuth();
 
+  // Restore anonymous session on app startup
+  const restoreAnonymousSession = useCallback(async () => {
+    if (isLoggedIn) return; // Don't restore if user is logged in
+    
+    const sessionData = getAnonymousSession();
+    if (!sessionData) return;
+    
+    try {
+      // Verify the session is still valid by checking with the server
+      const response = await client.post('/class/find-anonymous-user', {
+        passphrase: sessionData.code,
+        first_name: sessionData.first_name,
+        pin_code: sessionData.pin_code
+      });
+      
+      if (response.data.success && response.data.data) {
+        const existingUser = response.data.data;
+        const transformedClassroom = {
+          id: existingUser.class_id,
+          name: existingUser.class_name,
+          subject: existingUser.subject,
+          code: sessionData.code,
+          user_role: 'student',
+          joined_at: existingUser.joined_at,
+          student_id: existingUser.student_id,
+          first_name: existingUser.first_name,
+          is_returning: true,
+          is_cached: true // Flag to indicate this was restored from cache
+        };
+        
+        setClassrooms(prev => {
+          const exists = prev.find(c => c.id === transformedClassroom.id);
+          return exists ? prev : [...prev, transformedClassroom];
+        });
+        setCurrentClassroom(transformedClassroom);
+        
+        console.log(`Welcome back, ${sessionData.first_name}! Your session has been restored.`);
+      } else {
+        // Session is no longer valid, clear it
+        clearAnonymousSession();
+      }
+    } catch (error) {
+      console.warn('Failed to restore anonymous session:', error);
+      clearAnonymousSession();
+    }
+  }, [isLoggedIn]);
+
   // Fetch user's classrooms on mount and when user changes
   useEffect(() => {
     if (isLoggedIn && user) {
       fetchUserClassrooms();
+    } else if (!isLoggedIn) {
+      // Try to restore anonymous session if not logged in
+      restoreAnonymousSession();
     }
-  }, [isLoggedIn, user]);
+  }, [isLoggedIn, user, restoreAnonymousSession]);
 
   // Fetch user profile on mount if token exists but no user
   useEffect(() => {
@@ -169,6 +263,16 @@ export const ClassroomProvider = ({ children }) => {
           return exists ? prev : [...prev, transformedClassroom];
         });
         setCurrentClassroom(transformedClassroom);
+        
+        // Save session data for future restoration
+        saveAnonymousSession({
+          code: passphrase,
+          first_name: firstName,
+          pin_code: pinCode,
+          student_id: existingUser.student_id,
+          class_id: existingUser.class_id
+        });
+        
         return { success: true, classroom: transformedClassroom, isReturning: true };
       } else if (findResponse.data.error_type === 'name_exists') {
         // Name exists but PIN is wrong
@@ -198,6 +302,16 @@ export const ClassroomProvider = ({ children }) => {
             return exists ? prev : [...prev, transformedClassroom];
           });
           setCurrentClassroom(transformedClassroom);
+          
+          // Save session data for future restoration
+          saveAnonymousSession({
+            code: passphrase,
+            first_name: firstName,
+            pin_code: pinCode,
+            student_id: joinedClassroom.student_id,
+            class_id: joinedClassroom.class_id
+          });
+          
           return { success: true, classroom: transformedClassroom, isReturning: false };
         } else {
           setError(response.data.message);
@@ -222,6 +336,8 @@ export const ClassroomProvider = ({ children }) => {
         setClassrooms(prev => prev.filter(c => c.id !== classroomId));
         if (currentClassroom?.id === classroomId) {
           setCurrentClassroom(null);
+          // Clear anonymous session if leaving the current classroom
+          clearAnonymousSession();
         }
         return { success: true };
       } else {
@@ -230,6 +346,30 @@ export const ClassroomProvider = ({ children }) => {
       }
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to leave classroom';
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteClassroom = async (classroomId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await client.delete(`/class/${classroomId}`);
+      if (response.data.success) {
+        setClassrooms(prev => prev.filter(c => c.id !== classroomId));
+        if (currentClassroom?.id === classroomId) {
+          setCurrentClassroom(null);
+        }
+        return { success: true };
+      } else {
+        setError(response.data.message);
+        return { success: false, message: response.data.message };
+      }
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to delete classroom';
       setError(message);
       return { success: false, message };
     } finally {
@@ -298,6 +438,85 @@ export const ClassroomProvider = ({ children }) => {
     }
   }, []);
 
+  // Remove student from classroom (teachers only)
+  const removeStudentFromClassroom = useCallback(async (classroomId, studentId, studentType = 'registered') => {
+    setLoading(true);
+    setError(null);
+    try {
+      let response;
+      if (studentType === 'anonymous') {
+        // Use the dedicated endpoint for anonymous students
+        response = await client.delete(`/class/${classroomId}/remove-anonymous-student/${studentId}`);
+      } else {
+        // For registered students
+        response = await client.delete(`/class/${classroomId}/remove-student/${studentId}`);
+      }
+      
+      if (response.data.success) {
+        return { success: true, message: 'Student removed successfully' };
+      } else {
+        setError(response.data.message);
+        return { success: false, message: response.data.message };
+      }
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to remove student';
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Clear anonymous session when user logs in
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      clearAnonymousSession();
+      // Clear any anonymous classrooms from state
+      setClassrooms(prev => prev.filter(c => c.user_role !== 'student' || c.student_id));
+      if (currentClassroom?.user_role === 'student' && currentClassroom?.student_id) {
+        setCurrentClassroom(null);
+      }
+    }
+  }, [isLoggedIn, user, currentClassroom]);
+
+  // Get student-specific data (groups and devices)
+  const getStudentData = useCallback(async (classroomId) => {
+    try {
+      // Check if user is logged in
+      if (isLoggedIn && user) {
+        // Use authenticated endpoint for registered users
+        const response = await client.get(`/class/${classroomId}/student-data`);
+        if (response.data.success) {
+          return { success: true, data: response.data.data };
+        } else {
+          return { success: false, message: response.data.message };
+        }
+      } else {
+        // Use anonymous endpoint for anonymous students
+        const sessionData = getAnonymousSession();
+        if (!sessionData) {
+          return { success: false, message: 'No anonymous session found' };
+        }
+        
+        const response = await client.get(`/class/${classroomId}/anonymous-student-data`, {
+          params: {
+            first_name: sessionData.first_name,
+            pin_code: sessionData.pin_code
+          }
+        });
+        
+        if (response.data.success) {
+          return { success: true, data: response.data.data };
+        } else {
+          return { success: false, message: response.data.message };
+        }
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to fetch student data';
+      return { success: false, message: errorMessage };
+    }
+  }, [isLoggedIn, user]);
+
   const value = {
     classrooms,
     currentClassroom,
@@ -307,11 +526,16 @@ export const ClassroomProvider = ({ children }) => {
     joinClassroom,
     joinClassroomAnonymous,
     leaveClassroom,
+    deleteClassroom,
     getClassroomByCode,
     getAnonymousStudents,
     updateStudentPin,
+    removeStudentFromClassroom,
+    getStudentData,
     setCurrentClassroom,
-    clearError: () => setError(null)
+    clearError: () => setError(null),
+    clearAnonymousSession,
+    getAnonymousSession
   };
 
   return (

@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import CreateClassroomPage from './pages/CreateClassroomPage';
 import JoinClassroomPage from './pages/JoinClassroomPage';
 import ClassroomPage from './pages/ClassroomPage';
+import DeviceViewPage from './pages/DeviceViewPage';
 import ProfilePage from './pages/ProfilePage';
 import DirectPBitPage from './pages/DirectPBitPage';
 import { ClassroomProvider } from './contexts/ClassroomContext';
@@ -30,6 +31,8 @@ export default function App() {
                             <Route path="/create-classroom" element={<CreateClassroomPage />} />
                             <Route path="/join-classroom" element={<JoinClassroomPage />} />
                             <Route path="/classroom/:classroomId" element={<ClassroomPage />} />
+                            <Route path="/classroom/:classroomId/device/:deviceId" element={<DeviceViewPage />} />
+                            <Route path="/device/:deviceId" element={<DeviceViewPage />} />
                             <Route path="/profile" element={<ProfilePage />} />
                             <Route path="/pbit" element={<DirectPBitPage />} />
                             <Route path="/pbit/:macAddress" element={<DirectPBitPage />} />

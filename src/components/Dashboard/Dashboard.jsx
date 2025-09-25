@@ -28,7 +28,11 @@ import {
   Collapse,
   Accordion,
   AccordionSummary,
-  AccordionDetails
+  AccordionDetails,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material';
 import {
   School,
@@ -43,18 +47,22 @@ import {
   Visibility,
   ExpandMore,
   Create,
-  Lock
+  Lock,
+  Delete,
+  MoreVert
 } from '@mui/icons-material';
 import { useClassroom } from '../../contexts/ClassroomContext';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from './Dashboard.module.css';
 
 export default function Dashboard() {
-  const { classrooms, loading, error } = useClassroom();
+  const { classrooms, loading, error, deleteClassroom } = useClassroom();
   const { user, isLoggedIn } = useAuth();
   const navigate = useNavigate();
   const [speedDialOpen, setSpeedDialOpen] = useState(false);
   const [shareDialog, setShareDialog] = useState({ open: false, classroom: null });
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, classroom: null });
+  const [menuAnchor, setMenuAnchor] = useState({ el: null, classroom: null });
   const [expandedSection, setExpandedSection] = useState('created'); // 'created' or 'joined'
 
   const handleSpeedDialClose = () => {
@@ -113,6 +121,40 @@ export default function Dashboard() {
 
   const handleCloseShareDialog = () => {
     setShareDialog({ open: false, classroom: null });
+  };
+
+  const handleDeleteClassroom = (classroom) => {
+    setDeleteDialog({ open: true, classroom });
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialog({ open: false, classroom: null });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteDialog.classroom) {
+      const result = await deleteClassroom(deleteDialog.classroom.id);
+      if (result.success) {
+        handleCloseDeleteDialog();
+        // Optionally show a success message
+      } else {
+        // Error is handled by the context
+        console.error('Failed to delete classroom:', result.message);
+      }
+    }
+  };
+
+  const handleMenuOpen = (event, classroom) => {
+    setMenuAnchor({ el: event.currentTarget, classroom });
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchor({ el: null, classroom: null });
+  };
+
+  const handleMenuDelete = (classroom) => {
+    handleMenuClose();
+    handleDeleteClassroom(classroom);
   };
 
   const isTeacher = getUserRole(user) === 'teacher';
@@ -261,6 +303,16 @@ export default function Dashboard() {
                                 color="primary"
                               >
                                 <Share />
+                              </IconButton>
+                            </Tooltip>
+                            
+                            <Tooltip title="More options">
+                              <IconButton
+                                onClick={(e) => handleMenuOpen(e, classroom)}
+                                className={styles.moreButton}
+                                color="default"
+                              >
+                                <MoreVert />
                               </IconButton>
                             </Tooltip>
                           </CardActions>
@@ -612,6 +664,64 @@ export default function Dashboard() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteDialog.open}
+          onClose={handleCloseDeleteDialog}
+          aria-labelledby="delete-dialog-title"
+          aria-describedby="delete-dialog-description"
+        >
+          <DialogTitle id="delete-dialog-title">
+            Delete Classroom
+          </DialogTitle>
+          <DialogContent>
+            <Typography id="delete-dialog-description">
+              Are you sure you want to delete the classroom "{deleteDialog.classroom?.name}"?
+            </Typography>
+            <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+              <strong>Warning:</strong> This action cannot be undone. All students will be removed from this classroom and all data will be permanently deleted.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDeleteDialog} color="primary">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmDelete} 
+              color="error" 
+              variant="contained"
+              startIcon={<Delete />}
+            >
+              Delete Classroom
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* More Options Menu */}
+        <Menu
+          anchorEl={menuAnchor.el}
+          open={Boolean(menuAnchor.el)}
+          onClose={handleMenuClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+        >
+          <MenuItem 
+            onClick={() => handleMenuDelete(menuAnchor.classroom)}
+            sx={{ color: 'error.main' }}
+          >
+            <ListItemIcon>
+              <Delete color="error" />
+            </ListItemIcon>
+            <ListItemText>Delete Classroom</ListItemText>
+          </MenuItem>
+        </Menu>
       </Container>
     </Box>
   );

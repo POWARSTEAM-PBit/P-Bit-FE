@@ -1,0 +1,222 @@
+/* Device View Page Styles */
+
+.container {
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.headerInfo {
+  flex: 1;
+}
+
+.deviceTitle {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #1976d2;
+  margin-bottom: 8px;
+}
+
+.macAddress {
+  font-size: 0.875rem;
+  color: #666;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  margin-bottom: 16px;
+}
+
+.statusChips {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.statusChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.backButton {
+  margin-left: auto;
+}
+
+.section {
+  margin-bottom: 32px;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionContent {
+  padding: 24px;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.liveGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.liveCard {
+  padding: 16px;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.liveCardTitle {
+  font-size: 0.875rem;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.liveCardValue {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.liveCardUnit {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.gaugeContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.gaugeCard {
+  padding: 16px;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.gaugeTitle {
+  font-size: 0.875rem;
+  color: #666;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gaugeToggle {
+  margin-bottom: 12px;
+}
+
+.graphingControls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.graphingControl {
+  min-width: 150px;
+}
+
+.chartContainer {
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  min-height: 400px;
+}
+
+.devSection {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.devSectionTitle {
+  color: #856404;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.devControls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.devControl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.devButton {
+  margin-top: 16px;
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.errorContainer {
+  text-align: center;
+  padding: 24px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .deviceTitle {
+    font-size: 2rem;
+  }
+  
+  .liveGrid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  
+  .gaugeContainer {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+  
+  .graphingControls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .graphingControl {
+    min-width: auto;
+  }
+}

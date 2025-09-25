@@ -1,0 +1,25 @@
+/* Device Dev Section Styles */
+
+.devSection {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #856404;
+}
+
+.placeholder {
+  text-align: center;
+  padding: 48px 24px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  border: 2px dashed #856404;
+}
