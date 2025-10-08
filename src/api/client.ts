@@ -1,26 +1,36 @@
 import axios from "axios";
 
-/**
- * API base URL
- * - Prefer reading from .env (Vite style: VITE_*)
- * - Fallback to localhost:8000 so local dev still works if .env is missing
- */
-const baseUrl = 'http://13.239.216.36:8000';
+// Export base URL (used in dashboard display)
+export const baseUrl =
+  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
+// Create axios client
 const client = axios.create({
   baseURL: baseUrl,
-  withCredentials: false, // We're using Bearer token auth, not cookies
-  headers: {
-    "Content-Type": "application/json",
-  },
+  withCredentials: false,
+  timeout: 10000, // 10s timeout
+  headers: { "Content-Type": "application/json" },
 });
 
+// Add token to requests
 client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   if (token) {
+    config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
+// Handle unauthorized responses
+client.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err?.response?.status === 401) {
+      localStorage.removeItem("token");
+    }
+    return Promise.reject(err);
+  }
+);
 
 export default client;

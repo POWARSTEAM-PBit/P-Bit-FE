@@ -1,0 +1,154 @@
+.wrap {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .title {
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .api {
+    font-size: 12px;
+    color: #6b7280;
+  }
+  .headerRight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .inline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+  }
+  .select {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 6px 10px;
+    background: #fff;
+  }
+  
+  /* KPIs */
+  .kpiRow {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .kpiCard {
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 14px 16px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .kpiLabel {
+    font-size: 12px;
+    color: #6b7280;
+  }
+  .kpiValue {
+    font-size: 22px;
+    font-weight: 700;
+  }
+  
+  /* Filters */
+  .filters {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .filterLabel {
+    font-size: 12px;
+    margin-bottom: 6px;
+    color: #6b7280;
+  }
+  .filter {
+    display: flex;
+    flex-direction: column;
+    min-width: 220px;
+  }
+  
+  /* Gauges */
+  .gaugeGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .gaugeCard {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 12px 14px 10px 14px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .gaugeTitle {
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .gaugeValue {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: -8px;
+  }
+  .gaugeUnit {
+    font-size: 12px;
+    color: #6b7280;
+    margin-left: 6px;
+  }
+  .gaugeMeta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 6px;
+  }
+  .gaugeTs {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 4px;
+  }
+  
+  /* Chart */
+  .chartBox {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 10px;
+    background: #fff;
+    height: 360px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .chartHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 6px 10px 6px;
+  }
+  .chartTitle {
+    font-weight: 600;
+  }
+  .selection {
+    font-size: 12px;
+    color: #6b7280;
+  }
+  .chartBody {
+    height: calc(100% - 36px);
+  }
+  
+  .placeholder {
+    width: 100%;
+    height: 100%;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  

@@ -1,4 +1,8 @@
+// Core React + Router
 import { Routes, Route } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
+
+// Shared UI / Context
 import Header from './components/Header/Header';
 import StudentLoginPage from './pages/StudentLoginPage';
 import TeacherLoginPage from './pages/TeacherLoginPage';
@@ -42,4 +46,49 @@ export default function App() {
             </ClassroomProvider>
         </AuthProvider>
     );
-}
+
+  }
+// import { ClassroomProvider } from './contexts/ClassroomContext';
+
+// // ==== Lazy pages (loaded only when visited) ====
+// const StudentLoginPage     = lazy(() => import('./pages/StudentLoginPage'));
+// const TeacherLoginPage     = lazy(() => import('./pages/TeacherLoginPage'));
+// const RegisterPage         = lazy(() => import('./pages/RegisterPage'));
+// const DataDashboardPage    = lazy(() => import('./pages/DataDashboardView')); 
+// const CreateClassroomPage  = lazy(() => import('./pages/CreateClassroomPage'));
+// const JoinClassroomPage    = lazy(() => import('./pages/JoinClassroomPage'));
+// const ClassroomPage        = lazy(() => import('./pages/ClassroomPage'));
+// const ProfilePage          = lazy(() => import('./pages/ProfilePage'));
+// const ConnectionPage       = lazy(() => import('./pages/Connection'));
+
+// export default function App() {
+//   return (
+//     <ClassroomProvider>
+//       {/* Always visible header */}
+//       <Header />
+
+//       {/* While a lazy page is loading, show a tiny fallback */}
+//       <Suspense fallback={<div style={{ padding: 20 }}>Loading…</div>}>
+//         <Routes>
+//           {/* Default -> IoT dashboard */}
+//           <Route path="/" element={<DataDashboardPage />} />
+//           <Route path="/dashboard" element={<DataDashboardPage />} />
+
+//           {/* Auth */}
+//           <Route path="/login-student" element={<StudentLoginPage />} />
+//           <Route path="/login-teacher" element={<TeacherLoginPage />} />
+//           <Route path="/register" element={<RegisterPage />} />
+
+//           {/* Classrooms */}
+//           <Route path="/create-classroom" element={<CreateClassroomPage />} />
+//           <Route path="/join-classroom" element={<JoinClassroomPage />} />
+//           <Route path="/classroom/:classroomId" element={<ClassroomPage />} />
+
+//           {/* Misc */}
+//           <Route path="/profile" element={<ProfilePage />} />
+//           <Route path="/ble" element={<ConnectionPage />} />
+//         </Routes>
+//       </Suspense>
+//     </ClassroomProvider>
+//   );
+// }
