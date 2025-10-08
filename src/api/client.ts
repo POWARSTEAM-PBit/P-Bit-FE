@@ -5,7 +5,7 @@ import axios from "axios";
  * - Prefer reading from .env (Vite style: VITE_*)
  * - Fallback to localhost:8000 so local dev still works if .env is missing
  */
-const baseUrl = 'http://13.239.216.36:8000';
+const baseUrl = 'http://localhost:8000';
 
 const client = axios.create({
   baseURL: baseUrl,
