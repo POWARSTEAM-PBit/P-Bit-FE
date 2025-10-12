@@ -85,7 +85,7 @@ const IoTDataVisualization = () => {
         <Typography variant="body2">
           <strong>Demo Mode:</strong> These are three different graphing library demonstrations for IoT sensor data. 
           In production, students would see real-time data from their assigned IoT devices measuring temperature, 
-          moisture, light, and sound levels.
+          thermometer, humidity, moisture, light, and sound levels.
         </Typography>
       </Alert>
 
@@ -113,7 +113,7 @@ const IoTDataVisualization = () => {
                 <Box>
                   <Typography variant="h6">Sensors Active</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    4/4 sensors online
+                    6/6 sensors online
                   </Typography>
                 </Box>
               </Box>
