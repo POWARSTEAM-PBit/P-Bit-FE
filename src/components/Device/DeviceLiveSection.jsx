@@ -1,80 +1,116 @@
-import React, { useState } from 'react';
+// src/components/Device/DeviceLiveSection.jsx
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Box,
-  Typography,
-  Paper,
-  IconButton,
-  Tooltip,
-  Switch,
-  FormControlLabel,
-  LinearProgress,
-  Chip,
+  Box, Typography, Paper, IconButton, Tooltip, Switch,
+  FormControlLabel, LinearProgress, Chip, Button, Grid
 } from '@mui/material';
 import {
-  Refresh,
-  Thermostat,
-  WaterDrop,
-  LightMode,
-  VolumeUp,
-  BatteryChargingFull,
-  BatteryCharging50,
-  BatteryAlert,
+  Refresh, Thermostat, WaterDrop, LightMode, VolumeUp,
+  BatteryChargingFull, Link as LinkIcon, LinkOff as LinkOffIcon, Bluetooth as BluetoothIcon
 } from '@mui/icons-material';
 import styles from './DeviceLiveSection.module.css';
 
-const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
-  const [showGauges, setShowGauges] = useState({
-    temperature: true,
-    humidity: true,
-    light: true,
-    sound: true,
-    battery: true,
+// BLE helpers (new)
+import {
+  subscribe, connectBLEFiltered, connectBLECompatible, stop, isConnected
+} from '../../ble';
+
+/**
+ * Live section reading type aligned with the dashboard needs.
+ */
+const useLiveReading = () => {
+  const [connected, setConnected] = useState(false);
+  const [reading, setReading] = useState({
+    temperature: null, humidity: null, light: null, sound: null, battery: null, ts: null,
   });
 
-  const handleGaugeToggle = (sensor) => {
-    setShowGauges(prev => ({
-      ...prev,
-      [sensor]: !prev[sensor]
-    }));
-  };
+  useEffect(() => {
+    const off = subscribe((r) => {
+      setReading({
+        temperature: r.temp ?? r.air_temp ?? r.soil_temp ?? null,
+        humidity: r.hum ?? r.air_hum ?? r.soil_hum ?? null,
+        light: r.ldr ?? null,
+        sound: r.mic ?? null,
+        battery: r.batt ?? null,
+        ts: r.ts ?? Date.now(),
+      });
+      setConnected(true);
+    });
+    return off;
+  }, []);
 
-  const getSensorIcon = (sensor) => {
-    switch (sensor) {
-      case 'temperature': return <Thermostat />;
-      case 'humidity': return <WaterDrop />;
-      case 'light': return <LightMode />;
-      case 'sound': return <VolumeUp />;
-      case 'battery': return <BatteryChargingFull />;
-      default: return null;
+  const connectRecommended = async () => {
+    try {
+      await connectBLEFiltered();   // only show PBIT-xxxx
+      setConnected(isConnected());
+    } catch (e) {
+      console.error(e);
+      setConnected(false);
     }
   };
 
+  const connectCompatible = async () => {
+    try {
+      await connectBLECompatible(); // accept all devices, then try both services
+      setConnected(isConnected());
+    } catch (e) {
+      console.error(e);
+      setConnected(false);
+    }
+  };
+
+  const disconnect = () => {
+    stop();
+    setConnected(false);
+  };
+
+  return { reading, connected, connectRecommended, connectCompatible, disconnect };
+};
+
+const SensorCard = ({ icon, label, value, unit, color }) => (
+  <Paper elevation={2} sx={{ p: 2 }}>
+    <Box display="flex" alignItems="center" gap={1}>
+      {icon}
+      <Typography variant="subtitle2" color="text.secondary">{label}</Typography>
+    </Box>
+    <Typography variant="h5" sx={{ mt: 1 }}>
+      {value ?? '—'}{value != null ? ` ${unit}` : ''}
+    </Typography>
+    <LinearProgress
+      variant="determinate"
+      value={value != null ? Math.max(0, Math.min(100, Number(value))) : 0}
+      color={color}
+      sx={{ mt: 1 }}
+    />
+  </Paper>
+);
+
+export default function DeviceLiveSection() {
+  const { reading, connected, connectRecommended, connectCompatible, disconnect } = useLiveReading();
+
+  const [showGauges, setShowGauges] = useState({
+    temperature: true, humidity: true, light: true, sound: true, battery: true,
+  });
+
+  const handleGaugeToggle = (sensor) => {
+    setShowGauges(prev => ({ ...prev, [sensor]: !prev[sensor] }));
+  };
+
   const getSensorColor = (sensor, value) => {
-    if (!value && value !== 0) return 'default';
-    
+    if (value == null) return 'inherit';
     switch (sensor) {
       case 'temperature':
-        if (value > 30) return 'error';
-        if (value < 5) return 'info';
-        return 'success';
+        if (value > 30) return 'error'; if (value < 10) return 'warning'; return 'success';
       case 'humidity':
-        if (value > 80) return 'error';
-        if (value < 20) return 'warning';
-        return 'success';
+        if (value > 80) return 'error'; if (value < 20) return 'warning'; return 'success';
       case 'light':
-        if (value > 1000) return 'error';
-        if (value < 100) return 'warning';
-        return 'success';
+        if (value > 1000) return 'error'; if (value < 100) return 'warning'; return 'success';
       case 'sound':
-        if (value > 80) return 'error';
-        if (value > 60) return 'warning';
-        return 'success';
+        if (value > 80) return 'error'; if (value > 60) return 'warning'; return 'success';
       case 'battery':
-        if (value < 20) return 'error';
-        if (value < 50) return 'warning';
-        return 'success';
+        if (value < 20) return 'error'; if (value < 50) return 'warning'; return 'success';
       default:
-        return 'default';
+        return 'inherit';
     }
   };
 
@@ -89,174 +125,78 @@ const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
     }
   };
 
-  const getSensorRange = (sensor) => {
-    switch (sensor) {
-      case 'temperature': return { min: -10, max: 50 };
-      case 'humidity': return { min: 0, max: 100 };
-      case 'light': return { min: 0, max: 10000 };
-      case 'sound': return { min: 0, max: 120 };
-      case 'battery': return { min: 0, max: 100 };
-      default: return { min: 0, max: 100 };
-    }
-  };
-
-  const getSensorValue = (sensor) => {
-    if (sensor === 'battery') {
-      return device?.battery_level || 0;
-    }
-    return deviceData?.[sensor] || null;
-  };
-
-  const formatSensorValue = (sensor, value) => {
-    if (value === null || value === undefined) return 'N/A';
-    
-    switch (sensor) {
-      case 'temperature':
-        return `${value.toFixed(1)}°C`;
-      case 'humidity':
-        return `${value.toFixed(1)}%`;
-      case 'light':
-        return `${Math.round(value)} lux`;
-      case 'sound':
-        return `${value.toFixed(1)} dB`;
-      case 'battery':
-        return `${value}%`;
-      default:
-        return value.toString();
-    }
-  };
-
-  const sensors = [
-    { key: 'temperature', label: 'Temperature' },
-    { key: 'humidity', label: 'Humidity' },
-    { key: 'light', label: 'Light' },
-    { key: 'sound', label: 'Sound' },
-    { key: 'battery', label: 'Battery' },
-  ];
+  const sensorList = useMemo(() => ([
+    { key: 'temperature', label: 'Temperature', icon: <Thermostat /> },
+    { key: 'humidity',    label: 'Humidity',    icon: <WaterDrop /> },
+    { key: 'light',       label: 'Light',       icon: <LightMode /> },
+    { key: 'sound',       label: 'Sound',       icon: <VolumeUp /> },
+    { key: 'battery',     label: 'Battery',     icon: <BatteryChargingFull /> },
+  ]), []);
 
   return (
     <Paper elevation={3} sx={{ p: 3 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h5" component="h2" className={styles.sectionTitle}>
-          Live Data
-        </Typography>
-        <Tooltip title="Refresh Data">
-          <IconButton onClick={onRefresh} color="primary">
-            <Refresh />
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      {/* Recent Readouts Summary */}
-      <Box className={styles.summaryGrid}>
-        {sensors.map(sensor => {
-          const value = getSensorValue(sensor.key);
-          const formattedValue = formatSensorValue(sensor.key, value);
-          const color = getSensorColor(sensor.key, value);
-          
-          return (
-            <Box key={sensor.key} className={styles.summaryCard}>
-              <Box display="flex" alignItems="center" gap={1} mb={1}>
-                {getSensorIcon(sensor.key)}
-                <Typography variant="body2" className={styles.summaryLabel}>
-                  {sensor.label}
-                </Typography>
-              </Box>
-              <Typography variant="h6" className={styles.summaryValue}>
-                {formattedValue}
-              </Typography>
-            </Box>
-          );
-        })}
-      </Box>
-
-      {/* Gauge Controls */}
-      <Box mt={3} mb={2}>
-        <Typography variant="h6" gutterBottom>
-          Sensor Gauges
-        </Typography>
-        <Box display="flex" gap={2} flexWrap="wrap">
-          {sensors.map(sensor => (
-            <FormControlLabel
-              key={sensor.key}
-              control={
-                <Switch
-                  checked={showGauges[sensor.key]}
-                  onChange={() => handleGaugeToggle(sensor.key)}
-                  color="primary"
-                />
-              }
-              label={sensor.label}
-            />
-          ))}
-        </Box>
-      </Box>
-
-      {/* Gauges */}
-      <Box className={styles.gaugesContainer}>
-        {sensors.map(sensor => {
-          if (!showGauges[sensor.key]) return null;
-          
-          const value = getSensorValue(sensor.key);
-          const range = getSensorRange(sensor.key);
-          const percentage = value !== null && value !== undefined ? 
-            ((value - range.min) / (range.max - range.min)) * 100 : 0;
-          const color = getSensorColor(sensor.key, value);
-          
-          return (
-            <Box key={sensor.key} className={styles.gaugeCard}>
-              <Box display="flex" alignItems="center" gap={1} mb={2}>
-                {getSensorIcon(sensor.key)}
-                <Typography variant="subtitle1" className={styles.gaugeTitle}>
-                  {sensor.label}
-                </Typography>
-              </Box>
-              
-              <Box className={styles.gaugeContainer}>
-                <Box className={styles.gaugeValue}>
-                  {formatSensorValue(sensor.key, value)}
-                </Box>
-                
-                <Box className={styles.gaugeBar}>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min(Math.max(percentage, 0), 100)}
-                    color={color}
-                    sx={{
-                      height: 20,
-                      borderRadius: 10,
-                      backgroundColor: '#e0e0e0',
-                      '& .MuiLinearProgress-bar': {
-                        borderRadius: 10,
-                      },
-                    }}
-                  />
-                </Box>
-                
-                <Box className={styles.gaugeRange}>
-                  <Typography variant="caption" color="text.secondary">
-                    {range.min} - {range.max} {getSensorUnit(sensor.key)}
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          );
-        })}
-      </Box>
-
-      {/* Last Updated */}
-      {deviceData?.timestamp && (
-        <Box mt={3} display="flex" justifyContent="center">
+      {/* Header: BLE connect / disconnect */}
+      <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+        <Box display="flex" alignItems="center" gap={1}>
+          <BluetoothIcon color={connected ? 'primary' : 'disabled'} />
+          <Typography variant="h6">Live Data (BLE)</Typography>
           <Chip
-            icon={<Refresh />}
-            label={`Last updated: ${new Date(deviceData.timestamp).toLocaleString()}`}
-            variant="outlined"
             size="small"
+            label={connected ? 'BLE Connected' : 'Not Connected'}
+            color={connected ? 'success' : 'default'}
+            variant={connected ? 'filled' : 'outlined'}
           />
         </Box>
-      )}
+        <Box display="flex" gap={1}>
+          {!connected ? (
+            <>
+              <Button variant="contained" onClick={connectRecommended} startIcon={<LinkIcon />}>
+                Connect (P-BIT)
+              </Button>
+              <Button variant="outlined" onClick={connectCompatible}>
+                Compatible
+              </Button>
+            </>
+          ) : (
+            <Button variant="outlined" color="error" onClick={disconnect} startIcon={<LinkOffIcon />}>
+              Disconnect
+            </Button>
+          )}
+        </Box>
+      </Box>
+
+      {/* Gauge toggles */}
+      <Box display="flex" gap={2} flexWrap="wrap" mb={2}>
+        {sensorList.map(s => (
+          <FormControlLabel
+            key={s.key}
+            control={
+              <Switch
+                checked={!!showGauges[s.key]}
+                onChange={() => handleGaugeToggle(s.key)}
+              />
+            }
+            label={s.label}
+          />
+        ))}
+      </Box>
+
+      {/* Cards */}
+      <Grid container spacing={2}>
+        {sensorList.map(s => (
+          showGauges[s.key] && (
+            <Grid item xs={12} sm={6} md={4} key={s.key}>
+              <SensorCard
+                icon={s.icon}
+                label={s.label}
+                value={reading[s.key]}
+                unit={getSensorUnit(s.key)}
+                color={getSensorColor(s.key, reading[s.key])}
+              />
+            </Grid>
+          )
+        ))}
+      </Grid>
     </Paper>
   );
-};
-
-export default DeviceLiveSection;
+}

@@ -1,3 +1,9 @@
+// src/pages/DeviceViewPage.jsx
+// Device detail page with dual mode:
+// 1) Backend mode (default): fetch device info + latest data, render as before.
+// 2) Live-only BLE mode: if navigated with { liveOnly: true } OR deviceId starts with "ble:",
+//    skip all backend calls and render BLE-powered components directly.
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -13,15 +19,13 @@ import {
   Breadcrumbs,
   Link,
 } from '@mui/material';
-import { 
-  ArrowBack, 
-  Devices, 
+import {
+  ArrowBack,
+  Wifi as WifiIcon,
+  WifiOff as WifiOffIcon,
   BatteryChargingFull,
   BatteryCharging50,
   BatteryAlert,
-  Wifi,
-  WifiOff,
-  AccessTime
 } from '@mui/icons-material';
 
 import { useAuth } from '../contexts/AuthContext';
@@ -30,191 +34,153 @@ import { useDevice } from '../contexts/DeviceContext';
 import client from '../api/client';
 import styles from './DeviceViewPage.module.css';
 
-// Import device view components (to be created)
+// BLE-first device view components (no props required)
 import DeviceHeader from '../components/Device/DeviceHeader';
 import DeviceLiveSection from '../components/Device/DeviceLiveSection';
 import DeviceGraphingSection from '../components/Device/DeviceGraphingSection';
 import DeviceDevSection from '../components/Device/DeviceDevSection';
 
 const DeviceViewPage = () => {
-  const { deviceId, classroomId } = useParams();
+  const { deviceId, classroomId } = useParams(); // route likely: /classroom/:classroomId/device/:deviceId
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const { isLoggedIn, user } = useAuth();
-  const { classrooms, getAnonymousSession } = useClassroom();
+
+  const { isLoggedIn } = useAuth();
+  const { getAnonymousSession } = useClassroom();
   const { devices } = useDevice();
 
+  // --- Live-only (BLE) mode detection ---
+  // When coming from the session device card or when deviceId starts with "ble:", we do NOT call backend.
+  const liveOnly = Boolean(location.state?.liveOnly) || String(deviceId || '').startsWith('ble:');
+  const titleOverride = liveOnly ? (location.state?.name || 'P-BIT (BLE)') : undefined;
+  const fromClassroom = Boolean(classroomId && location.state?.fromClassroom);
+
+  // --- Backend-driven states (used only when not in liveOnly mode) ---
   const [device, setDevice] = useState(null);
   const [classroom, setClassroom] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!liveOnly); // if liveOnly, we don't load from backend
   const [error, setError] = useState(null);
   const [deviceData, setDeviceData] = useState(null);
 
-  // Determine if we came from a classroom or directly
-  const fromClassroom = classroomId && location.state?.fromClassroom;
-  const deviceNickname = fromClassroom && classroom?.device_assignments ? 
-    (classroom.device_assignments.find(da => da.device_id === deviceId)?.device?.nickname || device?.nickname) :
-    device?.nickname;
+  // Compute nickname shown in breadcrumbs (backend mode only)
+  const deviceNickname =
+    fromClassroom && classroom?.device_assignments
+      ? (classroom.device_assignments.find((da) => da.device_id === deviceId)?.device?.nickname ||
+          device?.nickname)
+      : device?.nickname;
 
-  // Fetch device information
+  // --- Backend: fetch device info (skipped in liveOnly) ---
   const fetchDevice = useCallback(async () => {
+    if (liveOnly) return; // do nothing in BLE mode
+
     try {
       setLoading(true);
       setError(null);
 
       let deviceResponse;
-      
-      // Debug logging
-      console.log('DeviceViewPage - fetchDevice:', {
-        isLoggedIn,
-        deviceId,
-        classroomId,
-        anonymousSession: getAnonymousSession()
-      });
-      
-      // Use appropriate endpoint based on authentication status
+
       if (isLoggedIn) {
-        // Authenticated user - use regular endpoint
-        console.log('Using authenticated endpoint');
+        // Authenticated user
         deviceResponse = await client.get(`/device/${deviceId}`);
       } else {
-        // Check for anonymous session
+        // Anonymous (student) viewer
         const anonymousSession = getAnonymousSession();
-        console.log('Anonymous session check:', { anonymousSession, classroomId });
-        
         if (anonymousSession && classroomId) {
-          // Anonymous user - use anonymous endpoint
-          console.log('Using anonymous endpoint with params:', {
-            class_id: classroomId,
-            first_name: anonymousSession.first_name,
-            pin_code: anonymousSession.pin_code
-          });
-          
           deviceResponse = await client.get(`/device/${deviceId}/anonymous`, {
             params: {
               class_id: classroomId,
               first_name: anonymousSession.first_name,
-              pin_code: anonymousSession.pin_code
-            }
+              pin_code: anonymousSession.pin_code,
+            },
           });
         } else {
-          console.log('No anonymous session or classroomId, throwing error');
           throw new Error('Authentication required. Please log in to view device details.');
         }
       }
 
-      if (deviceResponse.data.success) {
+      if (deviceResponse.data?.success) {
         setDevice(deviceResponse.data.data);
       } else {
-        throw new Error(deviceResponse.data.message || 'Failed to fetch device');
+        throw new Error(deviceResponse.data?.message || 'Failed to fetch device');
       }
 
-      // If we have a classroomId, get device assignment details for classroom-specific nickname
-      if (classroomId) {
+      // Optional: classroom assignment (only for authenticated)
+      if (classroomId && isLoggedIn) {
         try {
-          let assignmentResponse;
-          
-          if (isLoggedIn) {
-            // Authenticated user
-            assignmentResponse = await client.get(`/device/classroom/${classroomId}/devices`);
-          } else {
-            // Anonymous user - we already have the device info from the anonymous endpoint
-            // No need to fetch assignment details separately
-            return;
-          }
-          
-          if (assignmentResponse && assignmentResponse.data.success) {
-            // Find the assignment for this device
+          const assignmentResponse = await client.get(`/device/classroom/${classroomId}/devices`);
+          if (assignmentResponse?.data?.success) {
             const deviceAssignment = assignmentResponse.data.data.find(
-              assignment => assignment.device_id === deviceId
+              (assignment) => assignment.device_id === deviceId
             );
             if (deviceAssignment) {
               setClassroom({
                 id: classroomId,
-                device_assignments: [deviceAssignment]
+                device_assignments: [deviceAssignment],
               });
             }
           }
         } catch (assignmentErr) {
           console.warn('Could not fetch device assignment details:', assignmentErr);
-          // This is not critical, we can still show the device with its default nickname
         }
       }
-
     } catch (err) {
       console.error('Error fetching device:', err);
-      if (err.response?.status === 401) {
-        setError('Authentication required. Please log in to view device details.');
-      } else if (err.response?.status === 403) {
-        setError('Access denied. You do not have permission to view this device.');
-      } else if (err.response?.status === 404) {
-        setError('Device not found.');
-      } else {
-        setError(err.response?.data?.message || 'Failed to load device information');
-      }
+      if (err.response?.status === 401) setError('Authentication required. Please log in to view device details.');
+      else if (err.response?.status === 403) setError('Access denied. You do not have permission to view this device.');
+      else if (err.response?.status === 404) setError('Device not found.');
+      else setError(err.response?.data?.message || 'Failed to load device information');
     } finally {
       setLoading(false);
     }
-  }, [deviceId, classroomId, isLoggedIn, getAnonymousSession]);
+  }, [liveOnly, deviceId, classroomId, isLoggedIn, getAnonymousSession]);
 
-  // Fetch latest device data
+  // --- Backend: fetch latest data (skipped in liveOnly) ---
   const fetchLatestData = useCallback(async () => {
+    if (liveOnly) return; // do nothing in BLE mode
+
     try {
       let response;
-      
-      // Use appropriate endpoint based on authentication status
       if (isLoggedIn) {
-        // Authenticated user - use regular endpoint
         response = await client.get(`/device/${deviceId}/data/latest`);
       } else {
-        // Check for anonymous session
         const anonymousSession = getAnonymousSession();
         if (anonymousSession && classroomId) {
-          // Anonymous user - use anonymous endpoint
           response = await client.get(`/device/${deviceId}/data/latest/anonymous`, {
             params: {
               class_id: classroomId,
               first_name: anonymousSession.first_name,
-              pin_code: anonymousSession.pin_code
-            }
+              pin_code: anonymousSession.pin_code,
+            },
           });
         } else {
-          // No authentication available
           return;
         }
       }
-      
-      if (response.data.success) {
+      if (response?.data?.success) {
         setDeviceData(response.data.data.data);
       }
     } catch (err) {
       console.error('Error fetching latest device data:', err);
-      // Don't set error state for device data as it's not critical for the page to load
-      // The device view can still show device info without sensor data
+      // non-fatal
     }
-  }, [deviceId, isLoggedIn, getAnonymousSession, classroomId]);
+  }, [liveOnly, deviceId, isLoggedIn, getAnonymousSession, classroomId]);
 
-  // Initial data fetch
+  // Initial load (backend mode)
   useEffect(() => {
     fetchDevice();
   }, [fetchDevice]);
 
-  // Fetch latest data on mount and set up polling
+  // Polling latest data (backend mode)
   useEffect(() => {
     fetchLatestData();
-    
-    // Poll for latest data every 30 seconds
+    if (liveOnly) return; // no polling in BLE mode
     const interval = setInterval(fetchLatestData, 30000);
     return () => clearInterval(interval);
-  }, [fetchLatestData]);
+  }, [fetchLatestData, liveOnly]);
 
   const handleBack = () => {
-    if (fromClassroom) {
-      navigate(`/classroom/${classroomId}`);
-    } else {
-      navigate('/dashboard');
-    }
+    if (fromClassroom) navigate(`/classroom/${classroomId}`);
+    else navigate('/dashboard');
   };
 
   const getBatteryIcon = (batteryLevel) => {
@@ -224,22 +190,17 @@ const DeviceViewPage = () => {
   };
 
   const getOnlineStatus = (lastSeen) => {
-    if (!lastSeen) return { online: false, text: 'Never seen', icon: <WifiOff color="error" /> };
-    
+    if (!lastSeen) return { online: false, text: 'Never seen', icon: <WifiOffIcon color="error" /> };
     const now = new Date();
     const lastSeenDate = new Date(lastSeen);
     const diffMinutes = (now - lastSeenDate) / (1000 * 60);
-    
-    if (diffMinutes <= 1) {
-      return { online: true, text: 'Online', icon: <Wifi color="success" /> };
-    } else if (diffMinutes <= 60) {
-      return { online: false, text: `${Math.round(diffMinutes)}m ago`, icon: <WifiOff color="warning" /> };
-    } else {
-      return { online: false, text: `${Math.round(diffMinutes / 60)}h ago`, icon: <WifiOff color="error" /> };
-    }
+    if (diffMinutes <= 1) return { online: true, text: 'Online', icon: <WifiIcon color="success" /> };
+    if (diffMinutes <= 60) return { online: false, text: `${Math.round(diffMinutes)}m ago`, icon: <WifiOffIcon color="warning" /> };
+    return { online: false, text: `${Math.round(diffMinutes / 60)}h ago`, icon: <WifiOffIcon color="error" /> };
   };
 
-  if (loading) {
+  // --- Render paths ---
+  if (!liveOnly && loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -252,7 +213,7 @@ const DeviceViewPage = () => {
     );
   }
 
-  if (error) {
+  if (!liveOnly && error) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -265,7 +226,8 @@ const DeviceViewPage = () => {
     );
   }
 
-  if (!device) {
+  // backend mode needs device; BLE mode does not
+  if (!liveOnly && !device) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Alert severity="warning" sx={{ mb: 2 }}>
@@ -278,15 +240,17 @@ const DeviceViewPage = () => {
     );
   }
 
-  const onlineStatus = getOnlineStatus(device.last_seen);
+  // compute status only in backend mode
+  const onlineStatus = !liveOnly ? getOnlineStatus(device.last_seen) : null;
+  const breadcrumbName = liveOnly ? (titleOverride || 'P-BIT (BLE)') : (deviceNickname || device.nickname);
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {/* Breadcrumbs */}
       <Breadcrumbs sx={{ mb: 3 }}>
-        <Link 
-          color="inherit" 
-          href="#" 
+        <Link
+          color="inherit"
+          href="#"
           onClick={(e) => { e.preventDefault(); handleBack(); }}
           sx={{ display: 'flex', alignItems: 'center' }}
         >
@@ -294,44 +258,37 @@ const DeviceViewPage = () => {
           {fromClassroom ? 'Classroom' : 'Dashboard'}
         </Link>
         <Typography color="text.primary">
-          {deviceNickname || device.nickname}
+          {breadcrumbName}
         </Typography>
       </Breadcrumbs>
 
-      {/* Device Header */}
-      <DeviceHeader 
-        device={device}
-        deviceNickname={deviceNickname}
-        onlineStatus={onlineStatus}
-        batteryLevel={device.battery_level}
-        getBatteryIcon={getBatteryIcon}
-      />
+      {/* Header:
+          - BLE mode: show titleOverride & BLE connect controls
+          - Backend mode: you can still pass battery info via chips if needed,
+            but our DeviceHeader supports titleOverride and handles BLE itself. */}
+      <DeviceHeader titleOverride={titleOverride} />
 
       <Divider sx={{ my: 3 }} />
 
-      {/* Live Section */}
-      <DeviceLiveSection 
-        device={device}
-        deviceData={deviceData}
-        onRefresh={fetchLatestData}
-      />
+      {/* Live Section (BLE-powered). In backend mode you can still pass deviceData if you need,
+          but our BLE LiveSection ignores props and renders off the BLE stream. */}
+      <DeviceLiveSection />
 
       <Divider sx={{ my: 3 }} />
 
-      {/* Graphing Section */}
-      <DeviceGraphingSection 
-        deviceId={deviceId}
-        classroomId={classroomId}
-      />
+      {/* Graphs (BLE-powered live charts). */}
+      <DeviceGraphingSection />
 
-      {/* Dev Section - Only show in development */}
+      {/* Dev Section - Only show in development (optional) */}
       {process.env.NODE_ENV === 'development' && (
         <>
           <Divider sx={{ my: 3 }} />
-          <DeviceDevSection 
+          <DeviceDevSection
             deviceId={deviceId}
             classroomId={classroomId}
-            onDataAdded={fetchLatestData}
+            onDataAdded={() => {
+              if (!liveOnly) fetchLatestData();
+            }}
           />
         </>
       )}
