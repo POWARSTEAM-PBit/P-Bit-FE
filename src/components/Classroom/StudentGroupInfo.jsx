@@ -26,10 +26,15 @@ import {
   Battery90 as BatteryHighIcon,
   CheckCircle as ActiveIcon,
   Cancel as InactiveIcon,
-  Visibility as ViewIcon
+  Visibility as ViewIcon,
+  Bluetooth as BluetoothIcon,
+  Link as LinkIcon
 } from '@mui/icons-material';
 import { useClassroom } from '../../contexts/ClassroomContext';
 import { useAuth } from '../../contexts/AuthContext';
+
+// Import BLE functionality
+import { connectBLEFiltered, connectBLECompatible, isConnected } from '../../ble';
 
 const StudentGroupInfo = ({ classroomId }) => {
   const navigate = useNavigate();
@@ -98,6 +103,47 @@ const StudentGroupInfo = ({ classroomId }) => {
     navigate(`/classroom/${classroomId}/device/${deviceId}`, {
       state: { fromClassroom: true }
     });
+  };
+
+  // BLE connection functions for direct device connection
+  const handleConnectToDevice = async (device) => {
+    try {
+      // Try to connect to a P-BIT device
+      await connectBLEFiltered();
+      // Navigate to device view in live mode
+      navigate(`/classroom/${classroomId}/device/ble:${device.id}`, {
+        state: { 
+          fromClassroom: true, 
+          liveOnly: true, 
+          name: device.nickname,
+          deviceInfo: device
+        }
+      });
+    } catch (error) {
+      console.error('Failed to connect to device:', error);
+      // Fallback to regular device view
+      handleViewDevice(device.id);
+    }
+  };
+
+  const handleConnectCompatible = async (device) => {
+    try {
+      // Try to connect to any compatible device
+      await connectBLECompatible();
+      // Navigate to device view in live mode
+      navigate(`/classroom/${classroomId}/device/ble:${device.id}`, {
+        state: { 
+          fromClassroom: true, 
+          liveOnly: true, 
+          name: device.nickname,
+          deviceInfo: device
+        }
+      });
+    } catch (error) {
+      console.error('Failed to connect to device:', error);
+      // Fallback to regular device view
+      handleViewDevice(device.id);
+    }
   };
 
   const handleGroupToggle = (groupId) => {
@@ -266,19 +312,34 @@ const StudentGroupInfo = ({ classroomId }) => {
                                 {device.is_active ? 'Active' : 'Inactive'}
                               </Typography>
                             </Box>
-                            <Button
-                              size="small"
-                              startIcon={<ViewIcon />}
-                              color="primary"
-                              variant="outlined"
-                              fullWidth
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewDevice(device.id);
-                              }}
-                            >
-                              View Device
-                            </Button>
+                            <Box display="flex" flexDirection="column" gap={1}>
+                              <Button
+                                size="small"
+                                startIcon={<BluetoothIcon />}
+                                color="primary"
+                                variant="contained"
+                                fullWidth
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleConnectToDevice(device);
+                                }}
+                              >
+                                Connect via Bluetooth
+                              </Button>
+                              <Button
+                                size="small"
+                                startIcon={<ViewIcon />}
+                                color="primary"
+                                variant="outlined"
+                                fullWidth
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewDevice(device.id);
+                                }}
+                              >
+                                View Historical Data
+                              </Button>
+                            </Box>
                           </CardContent>
                         </Card>
                       </Grid>
@@ -351,19 +412,34 @@ const StudentGroupInfo = ({ classroomId }) => {
                         {device.is_active ? 'Active' : 'Inactive'}
                       </Typography>
                     </Box>
-                    <Button
-                      size="small"
-                      startIcon={<ViewIcon />}
-                      color="primary"
-                      variant="outlined"
-                      fullWidth
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewDevice(device.id);
-                      }}
-                    >
-                      View Device
-                    </Button>
+                    <Box display="flex" flexDirection="column" gap={1}>
+                      <Button
+                        size="small"
+                        startIcon={<BluetoothIcon />}
+                        color="primary"
+                        variant="contained"
+                        fullWidth
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleConnectToDevice(device);
+                        }}
+                      >
+                        Connect via Bluetooth
+                      </Button>
+                      <Button
+                        size="small"
+                        startIcon={<ViewIcon />}
+                        color="primary"
+                        variant="outlined"
+                        fullWidth
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewDevice(device.id);
+                        }}
+                      >
+                        View Historical Data
+                      </Button>
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>
@@ -432,19 +508,34 @@ const StudentGroupInfo = ({ classroomId }) => {
                         {device.is_active ? 'Active' : 'Inactive'}
                       </Typography>
                     </Box>
-                    <Button
-                      size="small"
-                      startIcon={<ViewIcon />}
-                      color="primary"
-                      variant="outlined"
-                      fullWidth
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewDevice(device.id);
-                      }}
-                    >
-                      View Device
-                    </Button>
+                    <Box display="flex" flexDirection="column" gap={1}>
+                      <Button
+                        size="small"
+                        startIcon={<BluetoothIcon />}
+                        color="primary"
+                        variant="contained"
+                        fullWidth
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleConnectToDevice(device);
+                        }}
+                      >
+                        Connect via Bluetooth
+                      </Button>
+                      <Button
+                        size="small"
+                        startIcon={<ViewIcon />}
+                        color="primary"
+                        variant="outlined"
+                        fullWidth
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewDevice(device.id);
+                        }}
+                      >
+                        View Historical Data
+                      </Button>
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>

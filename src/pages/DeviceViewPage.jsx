@@ -12,6 +12,8 @@ import {
   Divider,
   Breadcrumbs,
   Link,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { 
   ArrowBack, 
@@ -21,7 +23,10 @@ import {
   BatteryAlert,
   Wifi,
   WifiOff,
-  AccessTime
+  AccessTime,
+  Bluetooth as BluetoothIcon,
+  ShowChart as ShowChartIcon,
+  Sensors as SensorsIcon
 } from '@mui/icons-material';
 
 import { useAuth } from '../contexts/AuthContext';
@@ -30,11 +35,14 @@ import { useDevice } from '../contexts/DeviceContext';
 import client from '../api/client';
 import styles from './DeviceViewPage.module.css';
 
-// Import device view components (to be created)
+// Import device view components
 import DeviceHeader from '../components/Device/DeviceHeader';
 import DeviceLiveSection from '../components/Device/DeviceLiveSection';
 import DeviceGraphingSection from '../components/Device/DeviceGraphingSection';
 import DeviceDevSection from '../components/Device/DeviceDevSection';
+
+// Import BLE functionality
+import { isConnected, connectBLEFiltered, connectBLECompatible, stop, subscribe } from '../ble';
 
 const DeviceViewPage = () => {
   const { deviceId, classroomId } = useParams();
@@ -45,20 +53,36 @@ const DeviceViewPage = () => {
   const { classrooms, getAnonymousSession } = useClassroom();
   const { devices } = useDevice();
 
+  // --- Live-only (BLE) mode detection ---
+  // When coming from the session device card or when deviceId starts with "ble:",
+  // we do NOT call backend.
+  const liveOnly = Boolean(location.state?.liveOnly) || String(deviceId || '').startsWith('ble:');
+  const titleOverride = liveOnly ? (location.state?.name || 'P-BIT (BLE)') : undefined;
+  const fromClassroom = Boolean(classroomId && location.state?.fromClassroom);
+
+  // --- Backend-driven states (used only when not in liveOnly mode) ---
   const [device, setDevice] = useState(null);
   const [classroom, setClassroom] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!liveOnly); // if liveOnly, we don't load from backend
   const [error, setError] = useState(null);
   const [deviceData, setDeviceData] = useState(null);
 
-  // Determine if we came from a classroom or directly
-  const fromClassroom = classroomId && location.state?.fromClassroom;
-  const deviceNickname = fromClassroom && classroom?.device_assignments ? 
-    (classroom.device_assignments.find(da => da.device_id === deviceId)?.device?.nickname || device?.nickname) :
-    device?.nickname;
+  // --- BLE states ---
+  const [bleConnected, setBleConnected] = useState(isConnected());
+  const [bleDeviceName, setBleDeviceName] = useState(sessionStorage.getItem('pbit.deviceName') || 'P-BIT');
+  const [activeTab, setActiveTab] = useState(0); // 0: Live Data, 1: Historical Data
 
-  // Fetch device information
+  // Compute nickname shown in breadcrumbs (backend mode only)
+  const deviceNickname =
+    fromClassroom && classroom?.device_assignments
+      ? (classroom.device_assignments.find((da) => da.device_id === deviceId)?.device?.nickname ||
+          device?.nickname)
+      : device?.nickname;
+
+  // --- Backend: fetch device info (skipped in liveOnly) ---
   const fetchDevice = useCallback(async () => {
+    if (liveOnly) return; // do nothing in BLE mode
+
     try {
       setLoading(true);
       setError(null);
@@ -158,8 +182,10 @@ const DeviceViewPage = () => {
     }
   }, [deviceId, classroomId, isLoggedIn, getAnonymousSession]);
 
-  // Fetch latest device data
+  // --- Backend: fetch latest data (skipped in liveOnly) ---
   const fetchLatestData = useCallback(async () => {
+    if (liveOnly) return; // do nothing in BLE mode
+
     try {
       let response;
       
@@ -195,19 +221,24 @@ const DeviceViewPage = () => {
     }
   }, [deviceId, isLoggedIn, getAnonymousSession, classroomId]);
 
-  // Initial data fetch
+  // Initial load (backend mode)
   useEffect(() => {
     fetchDevice();
   }, [fetchDevice]);
 
-  // Fetch latest data on mount and set up polling
+  // Polling latest data (backend mode)
   useEffect(() => {
     fetchLatestData();
-    
-    // Poll for latest data every 30 seconds
+    if (liveOnly) return; // no polling in BLE mode
     const interval = setInterval(fetchLatestData, 30000);
     return () => clearInterval(interval);
-  }, [fetchLatestData]);
+  }, [fetchLatestData, liveOnly]);
+
+  // BLE connection monitoring
+  useEffect(() => {
+    const t = setInterval(() => setBleConnected(isConnected()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const handleBack = () => {
     if (fromClassroom) {
@@ -239,7 +270,8 @@ const DeviceViewPage = () => {
     }
   };
 
-  if (loading) {
+  // --- Render paths ---
+  if (!liveOnly && loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -252,7 +284,7 @@ const DeviceViewPage = () => {
     );
   }
 
-  if (error) {
+  if (!liveOnly && error) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -265,7 +297,8 @@ const DeviceViewPage = () => {
     );
   }
 
-  if (!device) {
+  // backend mode needs device; BLE mode does not
+  if (!liveOnly && !device) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Alert severity="warning" sx={{ mb: 2 }}>
@@ -278,7 +311,9 @@ const DeviceViewPage = () => {
     );
   }
 
-  const onlineStatus = getOnlineStatus(device.last_seen);
+  // compute status only in backend mode
+  const onlineStatus = !liveOnly ? getOnlineStatus(device.last_seen) : null;
+  const breadcrumbName = liveOnly ? (titleOverride || 'P-BIT (BLE)') : (deviceNickname || device.nickname);
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -294,34 +329,68 @@ const DeviceViewPage = () => {
           {fromClassroom ? 'Classroom' : 'Dashboard'}
         </Link>
         <Typography color="text.primary">
-          {deviceNickname || device.nickname}
+          {breadcrumbName}
         </Typography>
       </Breadcrumbs>
 
-      {/* Device Header */}
+      {/* Header:
+          - BLE mode: show titleOverride & BLE connect controls
+          - Backend mode: you can still pass battery info via chips if needed,
+            but our DeviceHeader supports titleOverride and handles BLE itself. */}
       <DeviceHeader 
         device={device}
         deviceNickname={deviceNickname}
         onlineStatus={onlineStatus}
-        batteryLevel={device.battery_level}
+        batteryLevel={device?.battery_level}
         getBatteryIcon={getBatteryIcon}
+        titleOverride={titleOverride}
+        liveOnly={liveOnly}
       />
 
       <Divider sx={{ my: 3 }} />
 
-      {/* Live Section */}
+      {/* Data Mode Tabs - Only show in backend mode with BLE capability */}
+      {!liveOnly && (
+        <Paper elevation={2} sx={{ mb: 3 }}>
+          <Tabs 
+            value={activeTab} 
+            onChange={(e, newValue) => setActiveTab(newValue)}
+            variant="fullWidth"
+            sx={{ borderBottom: 1, borderColor: 'divider' }}
+          >
+            <Tab 
+              icon={<SensorsIcon />} 
+              label="Live Data (BLE)" 
+              iconPosition="start"
+              disabled={!bleConnected}
+            />
+            <Tab 
+              icon={<ShowChartIcon />} 
+              label="Historical Data" 
+              iconPosition="start"
+            />
+          </Tabs>
+        </Paper>
+      )}
+
+      {/* Live Section (BLE-powered). In backend mode you can still pass deviceData if you need,
+          but our BLE LiveSection ignores props and renders off the BLE stream. */}
       <DeviceLiveSection 
         device={device}
         deviceData={deviceData}
         onRefresh={fetchLatestData}
+        liveOnly={liveOnly}
+        activeTab={activeTab}
       />
 
       <Divider sx={{ my: 3 }} />
 
-      {/* Graphing Section */}
+      {/* Graphs (BLE-powered live charts or Historical charts). */}
       <DeviceGraphingSection 
         deviceId={deviceId}
         classroomId={classroomId}
+        liveOnly={liveOnly}
+        activeTab={activeTab}
       />
 
       {/* Dev Section - Only show in development */}
@@ -331,7 +400,9 @@ const DeviceViewPage = () => {
           <DeviceDevSection 
             deviceId={deviceId}
             classroomId={classroomId}
-            onDataAdded={fetchLatestData}
+            onDataAdded={() => {
+              if (!liveOnly) fetchLatestData();
+            }}
           />
         </>
       )}

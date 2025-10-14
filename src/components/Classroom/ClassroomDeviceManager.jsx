@@ -38,10 +38,19 @@ import {
   CheckCircle as ActiveIcon,
   Cancel as InactiveIcon,
   Group as GroupIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Bluetooth as BluetoothIcon,
+  Link as LinkIcon,
+  LinkOff as LinkOffIcon
 } from '@mui/icons-material';
 import { useDevice } from '../../contexts/DeviceContext';
 import { useGroup } from '../../contexts/GroupContext';
+
+// Import BLE functionality
+import {
+  connectBLEFiltered, connectBLECompatible, stop as stopBLE,
+  isConnected as isBLEConnected, subscribe as subscribeBLE
+} from '../../ble';
 
 const ClassroomDeviceManager = ({ classroomId }) => {
   const navigate = useNavigate();
@@ -77,6 +86,14 @@ const ClassroomDeviceManager = ({ classroomId }) => {
   const [editAssignmentType, setEditAssignmentType] = useState('unassigned');
   const [editAssignmentTarget, setEditAssignmentTarget] = useState('');
 
+  // BLE state
+  const [bleConnected, setBleConnected] = useState(isBLEConnected());
+  const [bleName, setBleName] = useState(sessionStorage.getItem('pbit.deviceName') || 'P-BIT');
+  const [bleReading, setBleReading] = useState({ temp: null, hum: null, ldr: null, mic: null, batt: null });
+
+  // session devices (frontend-only list)
+  const [sessionDevices, setSessionDevices] = useState([]);
+
   useEffect(() => {
     if (classroomId) {
       getUserDevices();
@@ -85,6 +102,22 @@ const ClassroomDeviceManager = ({ classroomId }) => {
       getClassroomStudents(classroomId);
     }
   }, [classroomId, getUserDevices, getClassroomDevices, getClassroomGroups, getClassroomStudents]);
+
+  // BLE connection monitoring and data subscription
+  useEffect(() => {
+    const off = subscribeBLE((r) => {
+      setBleReading({
+        temp: r.temp ?? r.air_temp ?? r.soil_temp ?? null,
+        hum:  r.hum  ?? r.air_hum  ?? r.soil_hum  ?? null,
+        ldr:  r.ldr ?? null,
+        mic:  r.mic ?? null,
+        batt: r.batt ?? null,
+      });
+      setBleConnected(true);
+    });
+    const t = setInterval(() => setBleConnected(isBLEConnected()), 1000);
+    return () => { off && off(); clearInterval(t); };
+  }, []);
 
   const getBatteryIcon = (batteryLevel) => {
     if (batteryLevel >= 80) return <BatteryHighIcon color="success" />;
@@ -102,9 +135,9 @@ const ClassroomDeviceManager = ({ classroomId }) => {
     return mac.toUpperCase().replace(/:/g, ':');
   };
 
-  const handleViewDevice = (deviceId) => {
-    navigate(`/classroom/${classroomId}/device/${deviceId}`, {
-      state: { fromClassroom: true }
+  const handleViewDevice = (deviceId, extraState = {}) => {
+    navigate(`/classroom/${classroomId}/device/${deviceId}`, { 
+      state: { fromClassroom: true, ...extraState } 
     });
   };
 
@@ -154,6 +187,48 @@ const ClassroomDeviceManager = ({ classroomId }) => {
     }
   };
 
+  // BLE actions + add session device
+  const connectRecommended = async () => {
+    try { 
+      const n = await connectBLEFiltered(); 
+      setBleName(n || 'P-BIT'); 
+      setBleConnected(isBLEConnected()); 
+    }
+    catch (e) { 
+      console.error(e); 
+      setBleConnected(false); 
+    }
+  };
+  const connectCompatible = async () => {
+    try { 
+      const n = await connectBLECompatible(); 
+      setBleName(n || 'P-BIT'); 
+      setBleConnected(isBLEConnected()); 
+    }
+    catch (e) { 
+      console.error(e); 
+      setBleConnected(false); 
+    }
+  };
+  const disconnectBLE = () => { 
+    try { 
+      stopBLE(); 
+    } finally { 
+      setBleConnected(false); 
+    } 
+  };
+  const addBleSessionDevice = () => {
+    if (!bleConnected) return;
+    const id = `ble:${Date.now()}`;
+    setSessionDevices(prev => [...prev, {
+      id,
+      nickname: bleName || 'P-BIT',
+      mac_address: '',
+      is_active: true,
+      battery_level: bleReading.batt ?? 0,
+    }]);
+  };
+
   const getAssignmentInfo = (device) => {
     if (device.assignment_type === 'student') {
       const student = classroomStudents.find(s => s.id === device.assignment_id);
@@ -198,31 +273,132 @@ const ClassroomDeviceManager = ({ classroomId }) => {
           </Button>
         </Box>
 
+        {/* --- BLE inline panel --- */}
+        <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'background.default' }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <Box display="flex" alignItems="center" gap={1}>
+              <BluetoothIcon color={bleConnected ? 'primary' : 'disabled'} />
+              <Typography variant="subtitle1">Connect a P-BIT via Bluetooth</Typography>
+              <Chip
+                size="small"
+                label={bleConnected ? `Connected: ${bleName}` : 'Not connected'}
+                color={bleConnected ? 'success' : 'default'}
+                variant={bleConnected ? 'filled' : 'outlined'}
+                sx={{ ml: 1 }}
+              />
+            </Box>
+            <Box display="flex" gap={1}>
+              {!bleConnected ? (
+                <>
+                  <Button variant="contained" startIcon={<LinkIcon />} onClick={connectRecommended}>
+                    Connect (P-BIT)
+                  </Button>
+                  <Button variant="outlined" onClick={connectCompatible}>Compatible</Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="contained" onClick={addBleSessionDevice}>
+                    Add as Classroom Device (Session)
+                  </Button>
+                  <Button variant="outlined" color="error" startIcon={<LinkOffIcon />} onClick={disconnectBLE}>
+                    Disconnect
+                  </Button>
+                </>
+              )}
+            </Box>
+          </Box>
+
+          <Grid container spacing={2}>
+            {[
+              { k:'temp', label:'Temperature (°C)' },
+              { k:'hum',  label:'Humidity (%)' },
+              { k:'ldr',  label:'Light' },
+              { k:'mic',  label:'Noise' },
+              { k:'batt', label:'Battery (%)' },
+            ].map(s => (
+              <Grid item xs={12} sm={6} md={4} key={s.k}>
+                <Paper variant="outlined" sx={{ p: 1.5 }}>
+                  <Typography variant="body2" color="text.secondary">{s.label}</Typography>
+                  <Typography variant="h6" sx={{ mt: .5 }}>{bleReading[s.k] ?? '—'}</Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+
+          <Typography variant="caption" sx={{ opacity:.7, display:'block', mt:1 }}>
+            Open any device page — live charts will use this BLE stream automatically.
+          </Typography>
+        </Paper>
+        {/* --- end BLE panel --- */}
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={clearError}>
             {error}
           </Alert>
         )}
 
-        {availableDevices.length === 0 && classroomDevices.length === 0 && (
+        {availableDevices.length === 0 && classroomDevices.length === 0 && sessionDevices.length === 0 && (
           <Alert severity="info" sx={{ mb: 2 }}>
-            No devices available. Register devices in your device management page first.
+            No devices available. Register devices in your device management page first or connect via Bluetooth.
           </Alert>
         )}
 
-        {classroomDevices.length === 0 ? (
-          <Box textAlign="center" py={4}>
-            <WifiIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              No devices assigned to this classroom
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Add devices from your registered devices to get started
-            </Typography>
-          </Box>
-        ) : (
-          <Grid container spacing={3}>
-            {classroomDevices.map((classroomDevice) => {
+        {/* unified list: session devices + backend devices */}
+        <Grid container spacing={3}>
+          {/* session devices (frontend-only) */}
+          {sessionDevices.map(sd => (
+            <Grid item xs={12} sm={6} md={4} key={sd.id}>
+              <Card
+                sx={{ cursor:'pointer', transition:'all .2s', '&:hover':{ transform:'translateY(-2px)', boxShadow:4 } }}
+                onClick={() => handleViewDevice(sd.id, { liveOnly: true, name: sd.nickname })}
+              >
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                    <Typography variant="h6">{sd.nickname}</Typography>
+                    <Box display="flex" gap={1}>
+                      <Tooltip title="Active (session)"><ActiveIcon color="success" /></Tooltip>
+                      <Tooltip title={`Battery: ${bleReading.batt ?? 0}%`}>
+                        {getBatteryIcon(bleReading.batt ?? 0)}
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Session Device (BLE) • MAC unavailable
+                  </Typography>
+                  <Box display="flex" gap={1}>
+                    <Chip label="Active" color="success" size="small" />
+                    <Chip label={`${bleReading.batt ?? 0}%`} color={(bleReading.batt ?? 0) > 30 ? 'success' : 'error'} size="small" />
+                  </Box>
+                </CardContent>
+                <CardActions>
+                  <Button size="small" startIcon={<ViewIcon />} onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewDevice(sd.id, { liveOnly: true, name: sd.nickname });
+                  }}>View Live</Button>
+                  <Button size="small" startIcon={<RemoveIcon />} color="error" onClick={(e) => {
+                    e.stopPropagation();
+                    setSessionDevices(prev => prev.filter(x => x.id !== sd.id));
+                  }}>Remove</Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+
+          {/* backend devices (original) */}
+          {classroomDevices.length === 0 && sessionDevices.length === 0 ? (
+            <Grid item xs={12}>
+              <Box textAlign="center" py={4}>
+                <WifiIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  No devices assigned to this classroom
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Add devices from your registered devices or connect via Bluetooth to get started
+                </Typography>
+              </Box>
+            </Grid>
+          ) : (
+            classroomDevices.map((classroomDevice) => {
               const device = devices.find(d => d.id === classroomDevice.device_id);
               if (!device) return null;
 
@@ -326,9 +502,9 @@ const ClassroomDeviceManager = ({ classroomId }) => {
                   </Card>
                 </Grid>
               );
-            })}
-          </Grid>
-        )}
+            })
+          )}
+        </Grid>
       </Paper>
 
       {/* Assign Device Dialog */}
