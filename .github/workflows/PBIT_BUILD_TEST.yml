@@ -1,9 +1,9 @@
 name: P-Bit FE Build/Test Workflow
 
 on:
-  push:
+  pull_request:
     branches:
-      - 'deploy'
+      - 'main'
 jobs:
   build:
     runs-on: ubuntu-latest
