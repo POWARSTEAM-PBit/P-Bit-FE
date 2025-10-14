@@ -2,7 +2,7 @@ name: P-Bit FE Build Deployment Workflow
 on:
   push:
     branches:
-      - 'deploy'
+      - 'main'
 jobs:
   build:
     runs-on: ubuntu-latest
