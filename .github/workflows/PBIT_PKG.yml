@@ -1,11 +1,11 @@
-name: P-Bit BE Build Deployment Workflow
+name: P-Bit FE Build Deployment Workflow
 on:
   push:
     branches:
-      - 'deploy'
+      - 'main'
   pull_request:
     branches:
-      - 'deploy'
+      - 'main'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -43,4 +43,5 @@ jobs:
               --name pbit-frontend \
               -p 80:80 \
               --restart always \
+              -e VITE_API_BASE_URL="${{ secrets.VITE_API_BASE_URL }}" \
               localhost/pbit-frontend:latest
