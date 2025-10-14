@@ -1,0 +1,44 @@
+name: P-Bit FE Build Deployment Workflow
+on:
+  push:
+    branches:
+      - 'main'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Configure CA certificate for Docker registry
+        run: |
+          sudo mkdir -p /etc/docker/certs.d/13.239.216.36
+          echo "${{ secrets.REGISTRY_CA_CERT }}" | base64 -d | sudo tee /etc/docker/certs.d/13.239.216.36/ca.crt
+          sudo update-ca-certificates
+      
+      - name: Build and Push Image
+        run: |
+          docker build -t 13.239.216.36/pbit-frontend:latest .
+          docker push 13.239.216.36/pbit-frontend:latest
+
+      - name: SSH into EC2 and Run Docker Commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            docker stop pbit-frontend || true
+            docker rm pbit-frontend || true
+            docker rmi pbit-frontend:latest
+            
+            docker pull localhost/pbit-frontend:latest
+
+            # Run the new container with the same configuration as before
+            docker run -d \
+              --name pbit-frontend \
+              -p 80:80 \
+              --restart always \
+              -e VITE_API_BASE_URL="${{ secrets.VITE_API_BASE_URL }}" \
+              localhost/pbit-frontend:latest
