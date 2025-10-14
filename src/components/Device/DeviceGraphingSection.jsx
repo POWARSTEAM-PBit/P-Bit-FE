@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Paper,
   Typography,
@@ -78,6 +78,11 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
   const [customStartDate, setCustomStartDate] = useState(null);
   const [customEndDate, setCustomEndDate] = useState(null);
   const [useCustomRange, setUseCustomRange] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState(null);
+  const [refreshCountdown, setRefreshCountdown] = useState(3);
+  const lastDataTimestampRef = useRef(null);
+  const [noNewDataCount, setNoNewDataCount] = useState(0);
   const [graphs, setGraphs] = useState([
     {
       id: 1,
@@ -85,13 +90,17 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
       title: 'Sensor Data Over Time',
       selectedSensors: {
         temperature: true,
+        thermometer: false,
         humidity: true,
+        moisture: false,
         light: false,
         sound: false
       },
       colors: {
         temperature: '#ff6b6b',
+        thermometer: '#ff8c42',
         humidity: '#4ecdc4',
+        moisture: '#45b7d1',
         light: '#ffe66d',
         sound: '#a8e6cf'
       }
@@ -123,7 +132,9 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
 
   const sensors = [
     { key: 'temperature', label: 'Temperature (°C)', color: '#ff6b6b' },
+    { key: 'thermometer', label: 'Thermometer (°C)', color: '#ff8c42' },
     { key: 'humidity', label: 'Humidity (%)', color: '#4ecdc4' },
+    { key: 'moisture', label: 'Moisture (%)', color: '#45b7d1' },
     { key: 'light', label: 'Light (lux)', color: '#ffe66d' },
     { key: 'sound', label: 'Sound (dB)', color: '#a8e6cf' }
   ];
@@ -154,7 +165,7 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
     };
   };
 
-  const fetchChartData = useCallback(async () => {
+  const fetchChartData = useCallback(async (isAutoRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
@@ -189,17 +200,56 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
       }
 
       if (response.data.success) {
-        const transformedData = response.data.data.data.map(item => ({
+        const newData = response.data.data.data;
+        
+        // Check if we have new data by comparing timestamps (only for auto-refresh)
+        if (isAutoRefresh && lastDataTimestampRef.current && newData.length > 0) {
+          const latestDataTimestamp = new Date(newData[0].timestamp).getTime();
+          console.log('🔍 Smart Polling Check:', {
+            latestDataTimestamp: new Date(latestDataTimestamp),
+            lastDataTimestamp: new Date(lastDataTimestampRef.current),
+            isNewer: latestDataTimestamp > lastDataTimestampRef.current,
+            timeDiff: latestDataTimestamp - lastDataTimestampRef.current
+          });
+          
+          if (latestDataTimestamp <= lastDataTimestampRef.current) {
+            // No new data, just update refresh time but don't re-render
+            console.log('✅ No new data - skipping re-render');
+            setLastRefreshTime(new Date());
+            setNoNewDataCount(prev => prev + 1);
+            setLoading(false);
+            return; // Exit early - no state updates that would cause re-render
+          } else {
+            console.log('🆕 New data found - proceeding with update');
+          }
+        }
+
+        // Only proceed with data transformation and state updates if we have new data
+        const transformedData = newData.map(item => ({
           timestamp: new Date(item.timestamp).getTime(),
           time: new Date(item.timestamp).toLocaleTimeString(),
           date: new Date(item.timestamp).toLocaleDateString(),
           temperature: item.temperature,
+          thermometer: item.thermometer,
           humidity: item.humidity,
+          moisture: item.moisture,
           light: item.light,
           sound: item.sound
         })).reverse();
 
+        // Update chart data and related state
         setChartData(transformedData);
+        setLastRefreshTime(new Date());
+        setNoNewDataCount(0); // Reset counter when new data is found
+        
+        // Update the last data timestamp for smart polling
+        if (newData.length > 0) {
+          const newTimestamp = new Date(newData[0].timestamp).getTime();
+          lastDataTimestampRef.current = newTimestamp;
+        } else if (isAutoRefresh) {
+          // If no data but auto-refresh is on, initialize the ref to prevent issues
+          lastDataTimestampRef.current = Date.now();
+        }
       } else {
         throw new Error(response.data.message || 'Failed to fetch data');
       }
@@ -217,6 +267,45 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
     }
   }, [fetchChartData]);
 
+  // Auto-refresh effect
+  useEffect(() => {
+    let intervalId;
+    let countdownIntervalId;
+    
+    if (autoRefresh) {
+      console.log('🚀 Auto-refresh started - setting up intervals');
+      // Set up the main refresh interval
+      intervalId = setInterval(() => {
+        console.log('⏰ Auto-refresh trigger - calling fetchChartData');
+        fetchChartData(true); // Pass true to indicate this is an auto-refresh
+        setRefreshCountdown(3); // Reset countdown after refresh
+      }, 3000); // Refresh every 3 seconds
+
+      // Set up countdown timer
+      countdownIntervalId = setInterval(() => {
+        setRefreshCountdown(prev => {
+          if (prev <= 1) {
+            return 3; // Reset to 3 when it reaches 0
+          }
+          return prev - 1;
+        });
+      }, 1000); // Update countdown every second
+    } else {
+      setRefreshCountdown(3); // Reset countdown when auto-refresh is disabled
+      setNoNewDataCount(0); // Reset no new data count
+      lastDataTimestampRef.current = null; // Reset timestamp ref
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      if (countdownIntervalId) {
+        clearInterval(countdownIntervalId);
+      }
+    };
+  }, [autoRefresh, fetchChartData]);
+
   const addGraph = () => {
     const newGraph = {
       id: nextGraphId,
@@ -224,13 +313,17 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
       title: `Graph ${nextGraphId}`,
       selectedSensors: {
         temperature: true,
+        thermometer: false,
         humidity: false,
+        moisture: false,
         light: false,
         sound: false
       },
       colors: {
         temperature: '#ff6b6b',
+        thermometer: '#ff8c42',
         humidity: '#4ecdc4',
+        moisture: '#45b7d1',
         light: '#ffe66d',
         sound: '#a8e6cf'
       }
@@ -581,11 +674,23 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
             <Button
               variant="outlined"
               onClick={fetchChartData}
-              disabled={loading}
+              disabled={loading || autoRefresh}
               startIcon={loading ? <CircularProgress size={16} /> : <RefreshIcon />}
               fullWidth
             >
               Refresh
+            </Button>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={2}>
+            <Button
+              variant={autoRefresh ? "contained" : "outlined"}
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              startIcon={<Checkbox checked={autoRefresh} sx={{ p: 0, mr: 1 }} />}
+              fullWidth
+              color="primary"
+            >
+              Auto Refresh (3s)
             </Button>
           </Grid>
 
@@ -601,6 +706,26 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
           </Grid>
         </Grid>
 
+        {/* Auto-refresh status indicator */}
+        {autoRefresh && (
+          <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CircularProgress size={16} />
+            <Typography variant="body2" color="primary">
+              Auto-refreshing in {refreshCountdown}s...
+              {lastRefreshTime && (
+                <Typography component="span" variant="caption" sx={{ ml: 1, opacity: 0.7 }}>
+                  (Last: {lastRefreshTime.toLocaleTimeString()})
+                </Typography>
+              )}
+              {noNewDataCount > 0 && (
+                <Typography component="span" variant="caption" sx={{ ml: 1, opacity: 0.7, color: 'text.secondary' }}>
+                  - No new data ({noNewDataCount} checks)
+                </Typography>
+              )}
+            </Typography>
+          </Box>
+        )}
+
         {/* Graphs */}
         {graphs.map((graph, index) => (
           <Accordion key={graph.id} defaultExpanded={index === 0}>
@@ -614,6 +739,7 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
+                      e.preventDefault();
                       openConfigDialog(graph);
                     }}
                   >
@@ -624,6 +750,7 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
                       size="small"
                       onClick={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         removeGraph(graph.id);
                       }}
                     >

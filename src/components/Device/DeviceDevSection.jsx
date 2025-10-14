@@ -38,13 +38,17 @@ const DeviceDevSection = ({ deviceId, classroomId, onDataAdded }) => {
   const [simulationInterval, setSimulationInterval] = useState(5000);
   const [selectedSensors, setSelectedSensors] = useState({
     temperature: true,
+    thermometer: false,
     humidity: true,
+    moisture: false,
     light: false,
     sound: false
   });
   const [sensorRanges, setSensorRanges] = useState({
     temperature: { min: 15, max: 35 },
+    thermometer: { min: 15, max: 35 },
     humidity: { min: 30, max: 80 },
+    moisture: { min: 20, max: 90 },
     light: { min: 0, max: 1000 },
     sound: { min: 30, max: 90 }
   });
@@ -54,7 +58,9 @@ const DeviceDevSection = ({ deviceId, classroomId, onDataAdded }) => {
 
   const sensors = [
     { key: 'temperature', label: 'Temperature (°C)', unit: '°C' },
+    { key: 'thermometer', label: 'Thermometer (°C)', unit: '°C' },
     { key: 'humidity', label: 'Humidity (%)', unit: '%' },
+    { key: 'moisture', label: 'Moisture (%)', unit: '%' },
     { key: 'light', label: 'Light (lux)', unit: 'lux' },
     { key: 'sound', label: 'Sound (dB)', unit: 'dB' }
   ];
@@ -76,7 +82,9 @@ const DeviceDevSection = ({ deviceId, classroomId, onDataAdded }) => {
     const data = {
       timestamp: new Date().toISOString(),
       temperature: selectedSensors.temperature ? generateRandomValue(sensorRanges.temperature.min, sensorRanges.temperature.max) : null,
+      thermometer: selectedSensors.thermometer ? generateRandomValue(sensorRanges.thermometer.min, sensorRanges.thermometer.max) : null,
       humidity: selectedSensors.humidity ? generateRandomValue(sensorRanges.humidity.min, sensorRanges.humidity.max) : null,
+      moisture: selectedSensors.moisture ? generateRandomValue(sensorRanges.moisture.min, sensorRanges.moisture.max) : null,
       light: selectedSensors.light ? generateRandomValue(sensorRanges.light.min, sensorRanges.light.max) : null,
       sound: selectedSensors.sound ? generateRandomValue(sensorRanges.sound.min, sensorRanges.sound.max) : null
     };

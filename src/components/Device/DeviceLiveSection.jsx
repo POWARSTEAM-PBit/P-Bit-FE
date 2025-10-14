@@ -19,13 +19,17 @@ import {
   BatteryChargingFull,
   BatteryCharging50,
   BatteryAlert,
+  DeviceThermostat,
+  Grass,
 } from '@mui/icons-material';
 import styles from './DeviceLiveSection.module.css';
 
 const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
   const [showGauges, setShowGauges] = useState({
     temperature: true,
+    thermometer: true,
     humidity: true,
+    moisture: true,
     light: true,
     sound: true,
     battery: true,
@@ -41,7 +45,9 @@ const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
   const getSensorIcon = (sensor) => {
     switch (sensor) {
       case 'temperature': return <Thermostat />;
+      case 'thermometer': return <DeviceThermostat />;
       case 'humidity': return <WaterDrop />;
+      case 'moisture': return <Grass />;
       case 'light': return <LightMode />;
       case 'sound': return <VolumeUp />;
       case 'battery': return <BatteryChargingFull />;
@@ -57,7 +63,15 @@ const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
         if (value > 30) return 'error';
         if (value < 5) return 'info';
         return 'success';
+      case 'thermometer':
+        if (value > 30) return 'error';
+        if (value < 5) return 'info';
+        return 'success';
       case 'humidity':
+        if (value > 80) return 'error';
+        if (value < 20) return 'warning';
+        return 'success';
+      case 'moisture':
         if (value > 80) return 'error';
         if (value < 20) return 'warning';
         return 'success';
@@ -81,7 +95,9 @@ const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
   const getSensorUnit = (sensor) => {
     switch (sensor) {
       case 'temperature': return '°C';
+      case 'thermometer': return '°C';
       case 'humidity': return '%';
+      case 'moisture': return '%';
       case 'light': return 'lux';
       case 'sound': return 'dB';
       case 'battery': return '%';
@@ -92,7 +108,9 @@ const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
   const getSensorRange = (sensor) => {
     switch (sensor) {
       case 'temperature': return { min: -10, max: 50 };
+      case 'thermometer': return { min: -10, max: 50 };
       case 'humidity': return { min: 0, max: 100 };
+      case 'moisture': return { min: 0, max: 100 };
       case 'light': return { min: 0, max: 10000 };
       case 'sound': return { min: 0, max: 120 };
       case 'battery': return { min: 0, max: 100 };
@@ -113,7 +131,11 @@ const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
     switch (sensor) {
       case 'temperature':
         return `${value.toFixed(1)}°C`;
+      case 'thermometer':
+        return `${value.toFixed(1)}°C`;
       case 'humidity':
+        return `${value.toFixed(1)}%`;
+      case 'moisture':
         return `${value.toFixed(1)}%`;
       case 'light':
         return `${Math.round(value)} lux`;
@@ -128,7 +150,9 @@ const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
 
   const sensors = [
     { key: 'temperature', label: 'Temperature' },
+    { key: 'thermometer', label: 'Thermometer' },
     { key: 'humidity', label: 'Humidity' },
+    { key: 'moisture', label: 'Moisture' },
     { key: 'light', label: 'Light' },
     { key: 'sound', label: 'Sound' },
     { key: 'battery', label: 'Battery' },
@@ -260,3 +284,4 @@ const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
 };
 
 export default DeviceLiveSection;
+
