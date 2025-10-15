@@ -323,8 +323,9 @@ const StudentGroupInfo = ({ classroomId }) => {
                                   e.stopPropagation();
                                   handleConnectToDevice(device);
                                 }}
+                                disabled={!isConnected()}
                               >
-                                Connect via Bluetooth
+                                {isConnected() ? 'Connect via Bluetooth' : 'BLE Not Available'}
                               </Button>
                               <Button
                                 size="small"
@@ -339,6 +340,15 @@ const StudentGroupInfo = ({ classroomId }) => {
                               >
                                 View Historical Data
                               </Button>
+                              {device.device_type === 'ble' && (
+                                <Chip 
+                                  label="BLE Device" 
+                                  size="small" 
+                                  color="info" 
+                                  variant="outlined"
+                                  sx={{ alignSelf: 'center', mt: 0.5 }}
+                                />
+                              )}
                             </Box>
                           </CardContent>
                         </Card>
@@ -423,8 +433,9 @@ const StudentGroupInfo = ({ classroomId }) => {
                           e.stopPropagation();
                           handleConnectToDevice(device);
                         }}
+                        disabled={!isConnected()}
                       >
-                        Connect via Bluetooth
+                        {isConnected() ? 'Connect via Bluetooth' : 'BLE Not Available'}
                       </Button>
                       <Button
                         size="small"
@@ -439,6 +450,15 @@ const StudentGroupInfo = ({ classroomId }) => {
                       >
                         View Historical Data
                       </Button>
+                      {device.device_type === 'ble' && (
+                        <Chip 
+                          label="BLE Device" 
+                          size="small" 
+                          color="info" 
+                          variant="outlined"
+                          sx={{ alignSelf: 'center', mt: 0.5 }}
+                        />
+                      )}
                     </Box>
                   </CardContent>
                 </Card>
@@ -519,8 +539,9 @@ const StudentGroupInfo = ({ classroomId }) => {
                           e.stopPropagation();
                           handleConnectToDevice(device);
                         }}
+                        disabled={!isConnected()}
                       >
-                        Connect via Bluetooth
+                        {isConnected() ? 'Connect via Bluetooth' : 'BLE Not Available'}
                       </Button>
                       <Button
                         size="small"
@@ -535,6 +556,15 @@ const StudentGroupInfo = ({ classroomId }) => {
                       >
                         View Historical Data
                       </Button>
+                      {device.device_type === 'ble' && (
+                        <Chip 
+                          label="BLE Device" 
+                          size="small" 
+                          color="info" 
+                          variant="outlined"
+                          sx={{ alignSelf: 'center', mt: 0.5 }}
+                        />
+                      )}
                     </Box>
                   </CardContent>
                 </Card>

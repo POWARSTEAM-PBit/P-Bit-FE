@@ -11,15 +11,97 @@ export type Reading = {
   const LEGACY_SERVICE_UUID = 0x181a;
   const LEGACY_CHAR_UUID    = 0x2a6e;
   
-  let device: BluetoothDevice | null = null;
-  let server: BluetoothRemoteGATTServer | null = null;
-  let newChar: BluetoothRemoteGATTCharacteristic | null = null;
-  let legacyChar: BluetoothRemoteGATTCharacteristic | null = null;
+let device: BluetoothDevice | null = null;
+let server: BluetoothRemoteGATTServer | null = null;
+let newChar: BluetoothRemoteGATTCharacteristic | null = null;
+let legacyChar: BluetoothRemoteGATTCharacteristic | null = null;
+
+type Handler = (r: Reading) => void;
+const handlers = new Set<Handler>();
+export const subscribe = (h: Handler) => { handlers.add(h); return () => handlers.delete(h); };
+const emit = (r: Reading) => {
+  // Add to batch buffer for backend recording
+  batchBuffer.push(r);
   
-  type Handler = (r: Reading) => void;
-  const handlers = new Set<Handler>();
-  export const subscribe = (h: Handler) => { handlers.add(h); return () => handlers.delete(h); };
-  const emit = (r: Reading) => handlers.forEach(h => h(r));
+  // Limit buffer size to prevent memory issues
+  if (batchBuffer.length > MAX_BATCH_SIZE) {
+    batchBuffer = batchBuffer.slice(-MAX_BATCH_SIZE);
+  }
+  
+  // Emit to all handlers
+  handlers.forEach(h => h(r));
+};
+
+// Batch recording system
+let batchBuffer: Reading[] = [];
+let batchTimer: number | null = null;
+const BATCH_INTERVAL = 10000; // 10 seconds
+const MAX_BATCH_SIZE = 50; // Maximum readings per batch
+
+// Start batch recording
+const startBatchRecording = () => {
+  if (batchTimer) return; // Already recording
+  
+  batchTimer = window.setInterval(async () => {
+    if (batchBuffer.length > 0) {
+      try {
+        await recordBatchToBackend([...batchBuffer]);
+        batchBuffer = []; // Clear buffer after successful recording
+      } catch (error) {
+        console.error('Failed to record batch to backend:', error);
+        // Keep buffer for retry, but limit size
+        if (batchBuffer.length > MAX_BATCH_SIZE) {
+          batchBuffer = batchBuffer.slice(-MAX_BATCH_SIZE);
+        }
+      }
+    }
+  }, BATCH_INTERVAL);
+};
+
+// Stop batch recording
+const stopBatchRecording = () => {
+  if (batchTimer) {
+    clearInterval(batchTimer);
+    batchTimer = null;
+  }
+  // Record any remaining data before stopping
+  if (batchBuffer.length > 0) {
+    recordBatchToBackend([...batchBuffer]).catch(console.error);
+    batchBuffer = [];
+  }
+};
+
+// Record batch to backend
+const recordBatchToBackend = async (readings: Reading[]) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.warn('No auth token available for batch recording');
+    return;
+  }
+
+  const response = await fetch('http://127.0.0.1:5000/device/record-ble-batch', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'X-Device-Name': sessionStorage.getItem('pbit.deviceName') || 'P-BIT'
+    },
+    body: JSON.stringify({
+      readings: readings.map(r => ({
+        timestamp: new Date(r.ts).toISOString(),
+        temperature: r.temp ?? r.air_temp ?? r.soil_temp ?? null,
+        humidity: r.hum ?? r.air_hum ?? r.soil_hum ?? null,
+        light: r.ldr ?? null,
+        sound: r.mic ?? null,
+        battery_level: r.batt ?? null
+      }))
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Batch recording failed: ${response.status}`);
+  }
+};
   
   function parse17(buf: DataView): Reading {
     const r: Reading = { ts: Date.now() };
@@ -86,6 +168,7 @@ export type Reading = {
     });
     await connectInternal(dev, 'filtered');
     sessionStorage.setItem('pbit.deviceName', dev.name || 'P-BIT');
+    startBatchRecording(); // Start recording BLE data to backend
     return dev.name || 'P-BIT';
   }
   export async function connectBLECompatible() {
@@ -95,9 +178,11 @@ export type Reading = {
     });
     await connectInternal(dev, 'compatible');
     sessionStorage.setItem('pbit.deviceName', dev.name || 'P-BIT');
+    startBatchRecording(); // Start recording BLE data to backend
     return dev.name || 'P-BIT';
   }
   export function stop() {
+    stopBatchRecording(); // Stop recording and save any remaining data
     try { newChar?.stopNotifications(); } catch {}
     try { legacyChar?.stopNotifications(); } catch {}
     try { if (server?.connected) server.disconnect(); } catch {}

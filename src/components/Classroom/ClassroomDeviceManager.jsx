@@ -217,16 +217,75 @@ const ClassroomDeviceManager = ({ classroomId }) => {
       setBleConnected(false); 
     } 
   };
-  const addBleSessionDevice = () => {
+  const addBleSessionDevice = async () => {
     if (!bleConnected) return;
-    const id = `ble:${Date.now()}`;
-    setSessionDevices(prev => [...prev, {
-      id,
-      nickname: bleName || 'P-BIT',
-      mac_address: '',
-      is_active: true,
-      battery_level: bleReading.batt ?? 0,
-    }]);
+    
+    try {
+      // Create a temporary device entry in the backend
+      const deviceData = {
+        nickname: bleName || 'P-BIT',
+        mac_address: '', // BLE devices don't have traditional MAC addresses
+        is_active: true,
+        battery_level: bleReading.batt ?? 0,
+        device_type: 'ble', // Mark as BLE device
+        description: `BLE device connected by student - ${new Date().toLocaleString()}`
+      };
+      
+      // Register the device with the backend
+      const response = await fetch('http://127.0.0.1:5000/device/register-ble', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(deviceData)
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        const deviceId = result.data.device_id;
+        
+        // Automatically assign to classroom
+        await assignDeviceToClassroom(deviceId, classroomId, 'unassigned', null);
+        
+        // Add to session devices for immediate display
+        setSessionDevices(prev => [...prev, {
+          id: deviceId,
+          nickname: bleName || 'P-BIT',
+          mac_address: '',
+          is_active: true,
+          battery_level: bleReading.batt ?? 0,
+          is_ble_device: true
+        }]);
+        
+        // Refresh classroom devices to show the new device
+        getClassroomDevices(classroomId);
+      } else {
+        console.error('Failed to register BLE device:', await response.text());
+        // Fallback to session-only device
+        const id = `ble:${Date.now()}`;
+        setSessionDevices(prev => [...prev, {
+          id,
+          nickname: bleName || 'P-BIT',
+          mac_address: '',
+          is_active: true,
+          battery_level: bleReading.batt ?? 0,
+          is_ble_device: true
+        }]);
+      }
+    } catch (error) {
+      console.error('Error registering BLE device:', error);
+      // Fallback to session-only device
+      const id = `ble:${Date.now()}`;
+      setSessionDevices(prev => [...prev, {
+        id,
+        nickname: bleName || 'P-BIT',
+        mac_address: '',
+        is_active: true,
+        battery_level: bleReading.batt ?? 0,
+        is_ble_device: true
+      }]);
+    }
   };
 
   const getAssignmentInfo = (device) => {
@@ -325,9 +384,12 @@ const ClassroomDeviceManager = ({ classroomId }) => {
             ))}
           </Grid>
 
-          <Typography variant="caption" sx={{ opacity:.7, display:'block', mt:1 }}>
-            Open any device page — live charts will use this BLE stream automatically.
-          </Typography>
+                  <Typography variant="caption" sx={{ opacity:.7, display:'block', mt:1 }}>
+                    Open any device page — live charts will use this BLE stream automatically.
+                  </Typography>
+                  <Typography variant="caption" sx={{ opacity:.7, display:'block', mt:0.5 }}>
+                    Note: Only one student can connect via BLE at a time, but all students can view device data and historical graphs.
+                  </Typography>
         </Paper>
         {/* --- end BLE panel --- */}
 
