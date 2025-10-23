@@ -14,6 +14,7 @@ import {
   Link,
   Tabs,
   Tab,
+  Tooltip,
 } from '@mui/material';
 import { 
   ArrowBack, 
@@ -39,7 +40,7 @@ import styles from './DeviceViewPage.module.css';
 import DeviceHeader from '../components/Device/DeviceHeader';
 import DeviceLiveSection from '../components/Device/DeviceLiveSection';
 import DeviceGraphingSection from '../components/Device/DeviceGraphingSection';
-import DeviceDevSection from '../components/Device/DeviceDevSection';
+import DeviceLiveGraph from '../components/Device/DeviceLiveGraph';
 
 // Import BLE functionality
 import { isConnected, connectBLEFiltered, connectBLECompatible, stop, subscribe } from '../ble';
@@ -70,7 +71,7 @@ const DeviceViewPage = () => {
   // --- BLE states ---
   const [bleConnected, setBleConnected] = useState(isConnected());
   const [bleDeviceName, setBleDeviceName] = useState(sessionStorage.getItem('pbit.deviceName') || 'P-BIT');
-  const [activeTab, setActiveTab] = useState(0); // 0: Live Data, 1: Historical Data
+  const [activeTab, setActiveTab] = useState(bleConnected ? 0 : 1); // 0: Live Data, 1: Historical Data
 
   // Compute nickname shown in breadcrumbs (backend mode only)
   const deviceNickname =
@@ -192,13 +193,13 @@ const DeviceViewPage = () => {
       // Use appropriate endpoint based on authentication status
       if (isLoggedIn) {
         // Authenticated user - use regular endpoint
-        response = await client.get(`/device/${deviceId}/data/latest`);
+        response = await client.get(`/classroom-device/${deviceId}/data/latest`);
       } else {
         // Check for anonymous session
         const anonymousSession = getAnonymousSession();
         if (anonymousSession && classroomId) {
           // Anonymous user - use anonymous endpoint
-          response = await client.get(`/device/${deviceId}/data/latest/anonymous`, {
+          response = await client.get(`/classroom-device/${deviceId}/data/latest/anonymous`, {
             params: {
               class_id: classroomId,
               first_name: anonymousSession.first_name,
@@ -239,6 +240,15 @@ const DeviceViewPage = () => {
     const t = setInterval(() => setBleConnected(isConnected()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  // Update active tab when BLE connection changes
+  useEffect(() => {
+    if (bleConnected && activeTab === 1) {
+      setActiveTab(0); // Switch to Live Data tab when BLE connects
+    } else if (!bleConnected && activeTab === 0) {
+      setActiveTab(1); // Switch to Historical Data tab when BLE disconnects
+    }
+  }, [bleConnected, activeTab]);
 
   const handleBack = () => {
     if (fromClassroom) {
@@ -349,29 +359,28 @@ const DeviceViewPage = () => {
 
       <Divider sx={{ my: 3 }} />
 
-      {/* Data Mode Tabs - Only show in backend mode with BLE capability */}
-      {!liveOnly && (
-        <Paper elevation={2} sx={{ mb: 3 }}>
-          <Tabs 
-            value={activeTab} 
-            onChange={(e, newValue) => setActiveTab(newValue)}
-            variant="fullWidth"
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
-          >
-            <Tab 
-              icon={<SensorsIcon />} 
-              label="Live Data (BLE)" 
-              iconPosition="start"
-              disabled={!bleConnected}
-            />
-            <Tab 
-              icon={<ShowChartIcon />} 
-              label="Historical Data" 
-              iconPosition="start"
-            />
-          </Tabs>
-        </Paper>
-      )}
+      {/* Data Mode Tabs - Show for both backend and BLE modes */}
+      <Paper elevation={2} sx={{ mb: 3 }}>
+        <Tabs 
+          value={activeTab} 
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          variant="fullWidth"
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+        >
+          <Tab 
+            icon={<SensorsIcon />} 
+            label="Live Data" 
+            iconPosition="start"
+            disabled={!bleConnected}
+            title={!bleConnected ? "Device is offline - Live graph not available" : ""}
+          />
+          <Tab 
+            icon={<ShowChartIcon />} 
+            label="Historical Data" 
+            iconPosition="start"
+          />
+        </Tabs>
+      </Paper>
 
       {/* Live Section (BLE-powered). In backend mode you can still pass deviceData if you need,
           but our BLE LiveSection ignores props and renders off the BLE stream. */}
@@ -381,31 +390,38 @@ const DeviceViewPage = () => {
         onRefresh={fetchLatestData}
         liveOnly={liveOnly}
         activeTab={activeTab}
+        bleConnected={bleConnected}
       />
+
+      {/* Live Graph (BLE-powered) - Only shows on Live Data tab and when BLE is connected */}
+      <DeviceLiveGraph activeTab={activeTab} bleConnected={bleConnected} />
 
       <Divider sx={{ my: 3 }} />
 
-      {/* Graphs (BLE-powered live charts or Historical charts). */}
-      <DeviceGraphingSection 
-        deviceId={deviceId}
-        classroomId={classroomId}
-        liveOnly={liveOnly}
-        activeTab={activeTab}
-      />
-
-      {/* Dev Section - Only show in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <>
-          <Divider sx={{ my: 3 }} />
-          <DeviceDevSection 
+      {/* Graphs (Historical charts) - Only shows on Historical Data tab */}
+      {activeTab === 1 && (
+        liveOnly ? (
+          // For BLE devices, show a message about historical data
+          <Paper elevation={2} sx={{ p: 3, mt: 2 }}>
+            <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+              <ShowChartIcon sx={{ fontSize: 48, color: 'text.secondary' }} />
+              <Typography variant="h6" color="text.secondary">
+                Historical Data Not Available
+              </Typography>
+              <Typography variant="body2" color="text.secondary" textAlign="center">
+                BLE devices provide live data only. Historical data collection requires the device to be registered in the backend system.
+              </Typography>
+            </Box>
+          </Paper>
+        ) : (
+          <DeviceGraphingSection 
             deviceId={deviceId}
             classroomId={classroomId}
-            onDataAdded={() => {
-              if (!liveOnly) fetchLatestData();
-            }}
+            activeTab={activeTab}
           />
-        </>
+        )
       )}
+
     </Container>
   );
 };

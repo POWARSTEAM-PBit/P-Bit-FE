@@ -4,7 +4,7 @@
   align-items: center;
   min-height: calc(100vh - 64px);
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 .paper {
@@ -33,11 +33,11 @@
 
 .icon {
   font-size: 2.5rem !important;
-  color: #667eea;
+  color: #50B1F9;
 }
 
 .title {
-  color: #2c3e50;
+  color: #50B1F9;
   font-weight: 600 !important;
   text-align: center;
 }
@@ -60,7 +60,7 @@
 }
 
 .userTypeTitle {
-  color: #2c3e50;
+  color: #50B1F9;
   font-weight: 600 !important;
   margin-bottom: 1rem !important;
 }
@@ -81,9 +81,9 @@
 }
 
 .toggleButton.Mui-selected {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background: linear-gradient(135deg, #50B1F9 0%, #67C9FA 100%) !important;
   color: white !important;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 15px rgba(80, 177, 249, 0.3);
 }
 
 .toggleButton:hover {
@@ -104,18 +104,18 @@
 }
 
 .textField .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-  border-color: #667eea;
+  border-color: #50B1F9;
 }
 
 .textField .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #667eea;
+  border-color: #50B1F9;
 }
 
 .submitButton {
   margin-top: 1rem;
   padding: 12px 24px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background: linear-gradient(135deg, #50B1F9 0%, #67C9FA 100%) !important;
   font-weight: 600;
   text-transform: none;
   font-size: 1.1rem;
@@ -124,7 +124,7 @@
 
 .submitButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 25px rgba(80, 177, 249, 0.3);
 }
 
 .submitButton:disabled {
@@ -143,13 +143,13 @@
 }
 
 .loginLink {
-  color: #667eea !important;
+  color: #50B1F9 !important;
   font-weight: 500;
   text-transform: none;
 }
 
 .loginLink:hover {
-  background-color: rgba(102, 126, 234, 0.1) !important;
+  background-color: rgba(80, 177, 249, 0.1) !important;
 }
 
 /* Responsive Design */

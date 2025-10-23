@@ -14,7 +14,16 @@ import {
   Card,
   CardContent,
   Tooltip,
-  Button
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import {
   Group as GroupIcon,
@@ -28,18 +37,28 @@ import {
   Cancel as InactiveIcon,
   Visibility as ViewIcon,
   Bluetooth as BluetoothIcon,
-  Link as LinkIcon
+  Link as LinkIcon,
+  LinkOff as LinkOffIcon,
+  Add as AddIcon,
+  BluetoothConnected as BluetoothConnectedIcon
 } from '@mui/icons-material';
 import { useClassroom } from '../../contexts/ClassroomContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDevice } from '../../contexts/DeviceContext';
 
 // Import BLE functionality
-import { connectBLEFiltered, connectBLECompatible, isConnected } from '../../ble';
+import { 
+  connectBLEFiltered, 
+  connectBLECompatible, 
+  stop as stopBLE,
+  isConnected as isBLEConnected 
+} from '../../ble';
 
 const StudentGroupInfo = ({ classroomId }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { getStudentData, loading } = useClassroom();
+  const { getStudentData, loading, getAnonymousSession } = useClassroom();
+  const { assignDeviceToClassroom, getClassroomDevices } = useDevice();
   
   console.log('StudentGroupInfo render:', { classroomId, isTeacher: user?.user_type === 'teacher' || user?.role === 'teacher' });
 
@@ -48,6 +67,12 @@ const StudentGroupInfo = ({ classroomId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const hasFetched = useRef(false);
+
+  // BLE device addition state
+  const [bleConnected, setBleConnected] = useState(isBLEConnected());
+  const [bleName, setBleName] = useState(sessionStorage.getItem('pbit.deviceName') || 'P-BIT');
+  const [showAddDeviceDialog, setShowAddDeviceDialog] = useState(false);
+  const [addingDevice, setAddingDevice] = useState(false);
 
   // Check if current user is a teacher
   const isTeacher = useMemo(() => {
@@ -153,6 +178,140 @@ const StudentGroupInfo = ({ classroomId }) => {
     }));
   };
 
+  // BLE connection functions
+  const connectRecommended = async () => {
+    try { 
+      const n = await connectBLEFiltered(); 
+      setBleName(n || 'P-BIT'); 
+      setBleConnected(isBLEConnected()); 
+    }
+    catch (e) { 
+      console.error(e); 
+      setBleConnected(false); 
+    }
+  };
+
+  const connectCompatible = async () => {
+    try { 
+      const n = await connectBLECompatible(); 
+      setBleName(n || 'P-BIT'); 
+      setBleConnected(isBLEConnected()); 
+    }
+    catch (e) { 
+      console.error(e); 
+      setBleConnected(false); 
+    }
+  };
+
+  const disconnectBLE = () => {
+    try {
+      stopBLE(); 
+    } finally { 
+      setBleConnected(false); 
+    } 
+  };
+
+  // BLE device addition functionality
+  const handleAddBLEDevice = async () => {
+    if (!bleConnected) return;
+    
+    // Check if a device with the same nickname already exists in this classroom
+    const allDevices = [
+      ...(studentData.assigned_devices || []),
+      ...(studentData.public_devices || []),
+      ...(studentData.groups?.flatMap(group => group.devices || []) || [])
+    ];
+    
+    const existingDevice = allDevices.find(device => 
+      device.nickname === (bleName || 'P-BIT') && device.device_type === 'ble'
+    );
+    
+    if (existingDevice) {
+      // Device already exists, show option to view live instead of adding
+      const shouldViewLive = window.confirm(
+        `A device named "${bleName || 'P-BIT'}" is already in this classroom.\n\n` +
+        `Would you like to view it live instead of adding a duplicate?`
+      );
+      
+      if (shouldViewLive) {
+        // Navigate to the existing device's live view
+        handleViewDevice(existingDevice.id, { liveOnly: true, name: existingDevice.nickname });
+        setShowAddDeviceDialog(false);
+        return;
+      } else {
+        // User wants to add anyway, continue with the flow
+      }
+    }
+    
+    setAddingDevice(true);
+    try {
+      // Create a simple, readable nickname for BLE devices
+      const deviceData = {
+        nickname: bleName || 'P-BIT',
+        mac_address: '', // BLE devices don't have traditional MAC addresses
+        is_active: isBLEConnected(), // Use actual BLE connection status
+        battery_level: 0,
+        device_type: 'ble', // Mark as BLE device
+        description: `BLE device connected by student - ${new Date().toLocaleString()}`
+      };
+      
+      // Determine if user is anonymous (no token) or authenticated
+      const token = localStorage.getItem('token');
+      const isAnonymous = !token;
+      
+      let endpoint, headers;
+      
+      if (isAnonymous) {
+        // Get anonymous session data
+        const sessionData = getAnonymousSession();
+        if (!sessionData) {
+          throw new Error('No anonymous session found. Please log in again.');
+        }
+        
+        endpoint = `http://127.0.0.1:5000/device/register-ble-anonymous?class_id=${classroomId}&first_name=${sessionData.first_name}&pin_code=${sessionData.pin_code}`;
+        headers = {
+          'Content-Type': 'application/json'
+        };
+      } else {
+        endpoint = 'http://127.0.0.1:5000/device/register-ble';
+        headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        };
+      }
+      
+      // Register the device with the backend
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(deviceData)
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        const deviceId = result.data.device_id;
+        
+        // Automatically assign to classroom
+        await assignDeviceToClassroom(deviceId, classroomId, 'unassigned', null);
+        
+        // Refresh student data to show the new device
+        await handleRefresh();
+        
+        // Close dialog
+        setShowAddDeviceDialog(false);
+        
+        // Show success message
+        console.log('BLE device successfully added to classroom');
+      } else {
+        console.error('Failed to register BLE device:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error adding BLE device:', error);
+    } finally {
+      setAddingDevice(false);
+    }
+  };
+
   const handleRefresh = async () => {
     if (classroomId && !isTeacher) {
       hasFetched.current = false;
@@ -235,6 +394,7 @@ const StudentGroupInfo = ({ classroomId }) => {
 
   return (
     <Box>
+
       {/* My Groups Section */}
       {studentData.groups && studentData.groups.length > 0 && (
         <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
@@ -290,11 +450,11 @@ const StudentGroupInfo = ({ classroomId }) => {
                             <Box display="flex" alignItems="center" gap={1} mb={1}>
                               <WifiIcon color="action" />
                               <Typography variant="h6" noWrap>
-                                {device.nickname}
+                                {device.device_name || device.nickname}
                               </Typography>
                             </Box>
                             <Typography variant="body2" color="text.secondary" mb={1}>
-                              {formatMacAddress(device.mac_address)}
+                              {device.mac_address ? formatMacAddress(device.mac_address) : 'BLE Device'}
                             </Typography>
                             <Box display="flex" alignItems="center" gap={1} mb={1}>
                               {getBatteryIcon(device.battery_level)}
@@ -323,9 +483,9 @@ const StudentGroupInfo = ({ classroomId }) => {
                                   e.stopPropagation();
                                   handleConnectToDevice(device);
                                 }}
-                                disabled={!isConnected()}
+                                disabled={!isBLEConnected()}
                               >
-                                {isConnected() ? 'Connect via Bluetooth' : 'BLE Not Available'}
+                                {isBLEConnected() ? 'Connect via Bluetooth' : 'BLE Not Available'}
                               </Button>
                               <Button
                                 size="small"
@@ -400,11 +560,11 @@ const StudentGroupInfo = ({ classroomId }) => {
                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                       <WifiIcon color="action" />
                       <Typography variant="h6" noWrap>
-                        {device.nickname}
+                        {device.device_name || device.nickname}
                       </Typography>
                     </Box>
                     <Typography variant="body2" color="text.secondary" mb={1}>
-                      {formatMacAddress(device.mac_address)}
+                      {device.mac_address ? formatMacAddress(device.mac_address) : 'BLE Device'}
                     </Typography>
                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                       {getBatteryIcon(device.battery_level)}
@@ -433,9 +593,9 @@ const StudentGroupInfo = ({ classroomId }) => {
                           e.stopPropagation();
                           handleConnectToDevice(device);
                         }}
-                        disabled={!isConnected()}
+                        disabled={!isBLEConnected()}
                       >
-                        {isConnected() ? 'Connect via Bluetooth' : 'BLE Not Available'}
+                        {isBLEConnected() ? 'Connect via Bluetooth' : 'BLE Not Available'}
                       </Button>
                       <Button
                         size="small"
@@ -506,11 +666,11 @@ const StudentGroupInfo = ({ classroomId }) => {
                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                       <WifiIcon color="action" />
                       <Typography variant="h6" noWrap>
-                        {device.nickname}
+                        {device.device_name || device.nickname}
                       </Typography>
                     </Box>
                     <Typography variant="body2" color="text.secondary" mb={1}>
-                      {formatMacAddress(device.mac_address)}
+                      {device.mac_address ? formatMacAddress(device.mac_address) : 'BLE Device'}
                     </Typography>
                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                       {getBatteryIcon(device.battery_level)}
@@ -539,9 +699,9 @@ const StudentGroupInfo = ({ classroomId }) => {
                           e.stopPropagation();
                           handleConnectToDevice(device);
                         }}
-                        disabled={!isConnected()}
+                        disabled={!isBLEConnected()}
                       >
-                        {isConnected() ? 'Connect via Bluetooth' : 'BLE Not Available'}
+                        {isBLEConnected() ? 'Connect via Bluetooth' : 'BLE Not Available'}
                       </Button>
                       <Button
                         size="small"
@@ -574,6 +734,71 @@ const StudentGroupInfo = ({ classroomId }) => {
         </Paper>
       )}
 
+
+      {/* Add Device Section */}
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Box display="flex" alignItems="center" gap={2} mb={3}>
+          <AddIcon color="primary" />
+          <Typography variant="h5" component="h2">
+            Add Device
+          </Typography>
+        </Box>
+        
+        <Box display="flex" alignItems="center" gap={2} mb={2}>
+          <BluetoothIcon color={bleConnected ? "success" : "disabled"} />
+          <Typography variant="body1">
+            {bleConnected ? 'Bluetooth Connected' : 'Bluetooth Not Connected'}
+          </Typography>
+          <Chip 
+            label={bleConnected ? `Connected: ${bleName}` : 'Not connected'} 
+            color={bleConnected ? 'success' : 'default'} 
+            size="small"
+            variant={bleConnected ? 'filled' : 'outlined'}
+          />
+        </Box>
+        
+        {!bleConnected ? (
+          <Box display="flex" gap={2} mb={2}>
+            <Button 
+              variant="contained" 
+              startIcon={<LinkIcon />} 
+              onClick={connectRecommended}
+            >
+              Connect (P-BIT)
+            </Button>
+            <Button 
+              variant="outlined" 
+              onClick={connectCompatible}
+            >
+              Compatible
+            </Button>
+          </Box>
+        ) : (
+          <Box display="flex" gap={2} mb={2}>
+            <Button
+              variant="contained"
+              startIcon={<BluetoothConnectedIcon />}
+              onClick={() => setShowAddDeviceDialog(true)}
+              disabled={addingDevice}
+            >
+              {addingDevice ? 'Adding...' : 'Add P-BIT Device'}
+            </Button>
+            <Button 
+              variant="outlined" 
+              color="error" 
+              startIcon={<LinkOffIcon />} 
+              onClick={disconnectBLE}
+            >
+              Disconnect
+            </Button>
+          </Box>
+        )}
+        
+        <Typography variant="body2" color="text.secondary">
+          Connect to a P-BIT device via Bluetooth and add it to this classroom.
+        </Typography>
+      </Paper>
+
       {/* No Data Message */}
       {(!studentData.groups || studentData.groups.length === 0) && 
        (!studentData.assigned_devices || studentData.assigned_devices.length === 0) && 
@@ -589,6 +814,44 @@ const StudentGroupInfo = ({ classroomId }) => {
           </Alert>
         </Paper>
       )}
+
+      {/* Add Device Dialog */}
+      <Dialog 
+        open={showAddDeviceDialog} 
+        onClose={() => setShowAddDeviceDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add P-BIT Device</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Device Name"
+              value={bleName}
+              onChange={(e) => setBleName(e.target.value)}
+              placeholder="Enter a name for your P-BIT device"
+              sx={{ mb: 3 }}
+            />
+            
+            <Alert severity="info" sx={{ mb: 2 }}>
+              This will register your connected P-BIT device and add it to this classroom.
+            </Alert>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowAddDeviceDialog(false)}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleAddBLEDevice} 
+            variant="contained"
+            disabled={addingDevice || !bleConnected}
+          >
+            {addingDevice ? 'Adding...' : 'Add Device'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

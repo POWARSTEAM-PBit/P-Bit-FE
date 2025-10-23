@@ -47,7 +47,7 @@
 }
 
 .title {
-  color: #2c3e50;
+  color: #50B1F9;
   font-weight: 700 !important;
   margin-bottom: 1rem !important;
 }
@@ -98,7 +98,7 @@
 }
 
 .contentTitle {
-  color: #2c3e50;
+  color: #50B1F9;
   font-weight: 600 !important;
 }
 
@@ -113,11 +113,11 @@
   padding: 1.5rem;
   background: #f8f9fa;
   border-radius: 8px;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #50B1F9;
 }
 
 .infoValue {
-  color: #2c3e50;
+  color: #50B1F9;
   font-weight: 600 !important;
   margin-top: 0.5rem !important;
 }
@@ -128,7 +128,7 @@
 }
 
 .descriptionTitle {
-  color: #2c3e50;
+  color: #50B1F9;
   font-weight: 600 !important;
   margin-bottom: 1rem !important;
 }
@@ -148,7 +148,7 @@
 }
 
 .placeholderTitle {
-  color: #2c3e50;
+  color: #50B1F9;
   font-weight: 600 !important;
   margin-bottom: 1rem !important;
 }

@@ -1,8 +1,9 @@
 .appBar {
-    background-color: #1976d2;
+    background: linear-gradient(135deg, #50B1F9 0%, #67C9FA 100%) !important;
     width: 100%;
     left: 0;
     right: 0;
+    box-shadow: 0 2px 8px rgba(80, 177, 249, 0.3) !important;
 }
 
 .toolbar {
@@ -47,8 +48,8 @@
     text-decoration: none;
 }
 
-.logoDesktop { display: none; }
-.logoMobile { display: flex; }
+.logoDesktop { display: none !important; }
+.logoMobile { display: flex !important; }
 
 .menuButtonMobile { display: flex; }
 
@@ -61,8 +62,8 @@
 
 /* Responsive */
 @media (min-width: 900px) {
-    .logoDesktop { display: flex; }
-    .logoMobile { display: none; }
+    .logoDesktop { display: flex !important; }
+    .logoMobile { display: none !important; }
     .menuButtonMobile { display: none; }
     .middle { display: flex; }   /* show desktop links */
 }

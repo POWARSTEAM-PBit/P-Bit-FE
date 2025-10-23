@@ -24,6 +24,8 @@ const DeviceHeader = ({
   onlineStatus, 
   batteryLevel, 
   getBatteryIcon,
+  titleOverride,
+  liveOnly,
   onBack 
 }) => {
   const formatMacAddress = (macAddress) => {
@@ -38,36 +40,42 @@ const DeviceHeader = ({
           <Box display="flex" alignItems="center" gap={2} mb={1}>
             <Devices color="primary" sx={{ fontSize: 32 }} />
             <Typography variant="h4" component="h1" className={styles.deviceTitle}>
-              {deviceNickname || device.nickname}
+              {titleOverride || deviceNickname || device?.nickname || 'P-BIT Device'}
             </Typography>
           </Box>
           
-          <Typography variant="body2" className={styles.macAddress}>
-            MAC: {formatMacAddress(device.mac_address)}
-          </Typography>
+          {liveOnly && (
+            <Typography variant="body2" className={styles.macAddress}>
+              BLE Device
+            </Typography>
+          )}
           
           <Box className={styles.statusChips}>
-            <Chip
-              icon={onlineStatus.icon}
-              label={onlineStatus.text}
-              color={onlineStatus.online ? "success" : "default"}
-              variant={onlineStatus.online ? "filled" : "outlined"}
-              size="small"
-            />
+            {onlineStatus && (
+              <Chip
+                icon={onlineStatus.icon}
+                label={onlineStatus.text}
+                color={onlineStatus.online ? "success" : "default"}
+                variant={onlineStatus.online ? "filled" : "outlined"}
+                size="small"
+              />
+            )}
             
-            <Chip
-              icon={getBatteryIcon(batteryLevel)}
-              label={`${batteryLevel}%`}
-              color={batteryLevel >= 30 ? "success" : "error"}
-              variant="outlined"
-              size="small"
-            />
+            {batteryLevel !== null && batteryLevel !== undefined && (
+              <Chip
+                icon={getBatteryIcon(batteryLevel)}
+                label={`${batteryLevel}%`}
+                color={batteryLevel >= 30 ? "success" : "error"}
+                variant="outlined"
+                size="small"
+              />
+            )}
             
             <Chip
               icon={<Devices />}
-              label={device.is_active ? "Active" : "Inactive"}
-              color={device.is_active ? "success" : "default"}
-              variant={device.is_active ? "filled" : "outlined"}
+              label={onlineStatus?.online ? "Active" : "Inactive"}
+              color={onlineStatus?.online ? "success" : "default"}
+              variant={onlineStatus?.online ? "filled" : "outlined"}
               size="small"
             />
           </Box>

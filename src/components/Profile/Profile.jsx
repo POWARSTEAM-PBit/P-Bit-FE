@@ -8,9 +8,7 @@ import {
   Avatar,
   Divider,
   Chip,
-  Grid,
-  Tabs,
-  Tab
+  Grid
 } from '@mui/material';
 import {
   ArrowBack,
@@ -18,23 +16,14 @@ import {
   Group,
   Person,
   Email,
-  Badge,
-  AccountCircle,
-  Devices
+  Badge
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import { useState } from 'react';
-import DeviceRegistration from '../Device/DeviceRegistration';
 import styles from './Profile.module.css';
 
 export default function Profile() {
   const { user, isLoggedIn, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(0);
-
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-  };
 
   if (!isLoggedIn || !user) {
     return (
@@ -96,114 +85,98 @@ export default function Profile() {
           </Typography>
         </Box>
 
-        {/* Tabs for Teachers */}
+        {/* Profile Information for Teachers */}
         {getUserRole() === 'teacher' && (
-          <Box sx={{ mb: 3 }}>
-            <Tabs value={activeTab} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tab label="Profile Information" icon={<AccountCircle />} />
-              <Tab label="Device Management" icon={<Devices />} />
-            </Tabs>
-          </Box>
-        )}
-
-        {activeTab === 0 && (
           <Grid container spacing={3}>
-          {/* Profile Card */}
-          <Grid item xs={12} md={4}>
-            <Paper elevation={2} className={styles.profileCard}>
-              <Box className={styles.profileHeader}>
-                <Avatar className={styles.avatar}>
-                  <Person />
-                </Avatar>
-                <Typography variant="h5" className={styles.userName}>
-                  {getUserName()}
+            {/* Profile Card */}
+            <Grid item xs={12} md={4}>
+              <Paper elevation={2} className={styles.profileCard}>
+                <Box className={styles.profileHeader}>
+                  <Avatar className={styles.avatar}>
+                    <Person />
+                  </Avatar>
+                  <Typography variant="h5" className={styles.userName}>
+                    {getUserName()}
+                  </Typography>
+                  <Chip
+                    icon={getRoleIcon()}
+                    label={getUserRole().charAt(0).toUpperCase() + getUserRole().slice(1)}
+                    color={getRoleColor()}
+                    className={styles.roleChip}
+                  />
+                </Box>
+              </Paper>
+            </Grid>
+
+            {/* Details Card */}
+            <Grid item xs={12} md={8}>
+              <Paper elevation={2} className={styles.detailsCard}>
+                <Typography variant="h5" component="h2" className={styles.sectionTitle}>
+                  Account Information
                 </Typography>
-                <Chip
-                  icon={getRoleIcon()}
-                  label={getUserRole().charAt(0).toUpperCase() + getUserRole().slice(1)}
-                  color={getRoleColor()}
-                  className={styles.roleChip}
-                />
-              </Box>
-            </Paper>
-          </Grid>
+                
+                <Divider className={styles.divider} />
 
-          {/* Details Card */}
-          <Grid item xs={12} md={8}>
-            <Paper elevation={2} className={styles.detailsCard}>
-              <Typography variant="h5" component="h2" className={styles.sectionTitle}>
-                Account Information
-              </Typography>
-              
-              <Divider className={styles.divider} />
-
-              <Box className={styles.infoGrid}>
-                <Box className={styles.infoItem}>
-                  <Box className={styles.infoLabel}>
-                    <Person className={styles.infoIcon} />
-                    <Typography variant="subtitle2">First Name</Typography>
-                  </Box>
-                  <Typography variant="body1" className={styles.infoValue}>
-                    {user.first_name || 'Not provided'}
-                  </Typography>
-                </Box>
-
-                <Box className={styles.infoItem}>
-                  <Box className={styles.infoLabel}>
-                    <Person className={styles.infoIcon} />
-                    <Typography variant="subtitle2">Last Name</Typography>
-                  </Box>
-                  <Typography variant="body1" className={styles.infoValue}>
-                    {user.last_name || 'Not provided'}
-                  </Typography>
-                </Box>
-
-                <Box className={styles.infoItem}>
-                  <Box className={styles.infoLabel}>
-                    {getUserRole() === 'teacher' ? <Email className={styles.infoIcon} /> : <AccountCircle className={styles.infoIcon} />}
-                    <Typography variant="subtitle2">
-                      {getUserRole() === 'teacher' ? 'Email' : 'Username'}
+                <Box className={styles.infoGrid}>
+                  <Box className={styles.infoItem}>
+                    <Box className={styles.infoLabel}>
+                      <Person className={styles.infoIcon} />
+                      <Typography variant="subtitle2">First Name</Typography>
+                    </Box>
+                    <Typography variant="body1" className={styles.infoValue}>
+                      {user.first_name || 'Not provided'}
                     </Typography>
                   </Box>
-                  <Typography variant="body1" className={styles.infoValue}>
-                    {user.user_id}
-                  </Typography>
-                </Box>
 
-                <Box className={styles.infoItem}>
-                  <Box className={styles.infoLabel}>
-                    <Badge className={styles.infoIcon} />
-                    <Typography variant="subtitle2">Account Type</Typography>
+                  <Box className={styles.infoItem}>
+                    <Box className={styles.infoLabel}>
+                      <Person className={styles.infoIcon} />
+                      <Typography variant="subtitle2">Last Name</Typography>
+                    </Box>
+                    <Typography variant="body1" className={styles.infoValue}>
+                      {user.last_name || 'Not provided'}
+                    </Typography>
                   </Box>
-                  <Typography variant="body1" className={styles.infoValue}>
-                    {getUserRole().charAt(0).toUpperCase() + getUserRole().slice(1)}
-                  </Typography>
+
+                  <Box className={styles.infoItem}>
+                    <Box className={styles.infoLabel}>
+                      <Email className={styles.infoIcon} />
+                      <Typography variant="subtitle2">Email</Typography>
+                    </Box>
+                    <Typography variant="body1" className={`${styles.infoValue} ${styles.emailValue}`}>
+                      {user.user_id}
+                    </Typography>
+                  </Box>
+
+                  <Box className={styles.infoItem}>
+                    <Box className={styles.infoLabel}>
+                      <Badge className={styles.infoIcon} />
+                      <Typography variant="subtitle2">Account Type</Typography>
+                    </Box>
+                    <Typography variant="body1" className={styles.infoValue}>
+                      {getUserRole().charAt(0).toUpperCase() + getUserRole().slice(1)}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
 
-              <Divider className={styles.divider} />
+                <Divider className={styles.divider} />
 
-              <Box className={styles.actions}>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={logout}
-                  className={styles.logoutButton}
-                >
-                  Logout
-                </Button>
-              </Box>
-            </Paper>
+                <Box className={styles.actions}>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={logout}
+                    className={styles.logoutButton}
+                  >
+                    Logout
+                  </Button>
+                </Box>
+              </Paper>
+            </Grid>
           </Grid>
-        </Grid>
         )}
 
-        {/* Device Management Tab for Teachers */}
-        {getUserRole() === 'teacher' && activeTab === 1 && (
-          <DeviceRegistration />
-        )}
-
-        {/* For Students, show profile without tabs */}
+        {/* For Students, show unified profile layout */}
         {getUserRole() !== 'teacher' && (
           <Grid container spacing={3}>
             {/* Profile Card */}
@@ -223,21 +196,56 @@ export default function Profile() {
                     className={styles.roleChip}
                   />
                 </Box>
+              </Paper>
+            </Grid>
 
+            {/* Details Card */}
+            <Grid item xs={12} md={8}>
+              <Paper elevation={2} className={styles.detailsCard}>
+                <Typography variant="h5" component="h2" className={styles.sectionTitle}>
+                  Account Information
+                </Typography>
+                
                 <Divider className={styles.divider} />
 
-                <Box className={styles.profileDetails}>
-                  <Box className={styles.detailItem}>
-                    <Email className={styles.detailIcon} />
-                    <Typography variant="body2" className={styles.detailText}>
-                      {user.email}
+                <Box className={styles.infoGrid}>
+                  <Box className={styles.infoItem}>
+                    <Box className={styles.infoLabel}>
+                      <Person className={styles.infoIcon} />
+                      <Typography variant="subtitle2">First Name</Typography>
+                    </Box>
+                    <Typography variant="body1" className={styles.infoValue}>
+                      {user.first_name || 'Not provided'}
                     </Typography>
                   </Box>
 
-                  <Box className={styles.detailItem}>
-                    <Badge className={styles.detailIcon} />
-                    <Typography variant="body2" className={styles.detailText}>
-                      ID: {user.id}
+                  <Box className={styles.infoItem}>
+                    <Box className={styles.infoLabel}>
+                      <Person className={styles.infoIcon} />
+                      <Typography variant="subtitle2">Last Name</Typography>
+                    </Box>
+                    <Typography variant="body1" className={styles.infoValue}>
+                      {user.last_name || 'Not provided'}
+                    </Typography>
+                  </Box>
+
+                  <Box className={styles.infoItem}>
+                    <Box className={styles.infoLabel}>
+                      <Email className={styles.infoIcon} />
+                      <Typography variant="subtitle2">Email</Typography>
+                    </Box>
+                    <Typography variant="body1" className={`${styles.infoValue} ${styles.emailValue}`}>
+                      {user.user_id}
+                    </Typography>
+                  </Box>
+
+                  <Box className={styles.infoItem}>
+                    <Box className={styles.infoLabel}>
+                      <Badge className={styles.infoIcon} />
+                      <Typography variant="subtitle2">Account Type</Typography>
+                    </Box>
+                    <Typography variant="body1" className={styles.infoValue}>
+                      {getUserRole().charAt(0).toUpperCase() + getUserRole().slice(1)}
                     </Typography>
                   </Box>
                 </Box>

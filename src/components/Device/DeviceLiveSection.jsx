@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -24,7 +24,10 @@ import {
 } from '@mui/icons-material';
 import styles from './DeviceLiveSection.module.css';
 
-const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
+// BLE helpers
+import { subscribe } from '../../ble';
+
+const DeviceLiveSection = ({ device, deviceData, onRefresh, activeTab, bleConnected }) => {
   const [showGauges, setShowGauges] = useState({
     temperature: true,
     thermometer: true,
@@ -32,8 +35,38 @@ const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
     moisture: true,
     light: true,
     sound: true,
-    battery: true,
   });
+
+  // BLE data state
+  const [bleData, setBleData] = useState({
+    temperature: null,
+    thermometer: null,
+    humidity: null,
+    moisture: null,
+    light: null,
+    sound: null,
+  });
+
+  // Subscribe to BLE data
+  useEffect(() => {
+    if (activeTab !== 0) return; // Only subscribe when on Live Data tab
+
+    const unsubscribe = subscribe((reading) => {
+      // Debug: log the raw BLE reading to help identify sound sensor issue
+      console.log('BLE Reading:', reading);
+      
+        setBleData({
+          temperature: reading.temp ?? reading.air_temp ?? null,
+          thermometer: reading.soil_temp ?? null, // Only use soil_temp if available, otherwise null
+          humidity: reading.hum ?? reading.air_hum ?? null,
+          moisture: reading.soil_hum ?? null, // Only use soil_hum if available, otherwise null
+          light: reading.ldr ?? null,
+          sound: reading.mic ?? null,
+        });
+    });
+
+    return unsubscribe;
+  }, [activeTab]);
 
   const handleGaugeToggle = (sensor) => {
     setShowGauges(prev => ({
@@ -119,10 +152,8 @@ const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
   };
 
   const getSensorValue = (sensor) => {
-    if (sensor === 'battery') {
-      return device?.battery_level || 0;
-    }
-    return deviceData?.[sensor] || null;
+    // Use BLE data when available, fallback to deviceData
+    return bleData[sensor] ?? deviceData?.[sensor] ?? null;
   };
 
   const formatSensorValue = (sensor, value) => {
@@ -155,8 +186,10 @@ const DeviceLiveSection = ({ device, deviceData, onRefresh }) => {
     { key: 'moisture', label: 'Moisture' },
     { key: 'light', label: 'Light' },
     { key: 'sound', label: 'Sound' },
-    { key: 'battery', label: 'Battery' },
   ];
+
+  // Only render when on Live Data tab and BLE is connected
+  if (activeTab !== 0 || !bleConnected) return null;
 
   return (
     <Paper elevation={3} sx={{ p: 3 }}>

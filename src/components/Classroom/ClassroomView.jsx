@@ -24,7 +24,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import styles from './ClassroomView.module.css';
 
 import CombinedStudentManager from './CombinedStudentManager';
-import ClassroomDeviceManager from './ClassroomDeviceManager';
+import NewClassroomDeviceManager from './NewClassroomDeviceManager';
 import GroupManager from './GroupManager';
 import StudentGroupInfo from './StudentGroupInfo';
 
@@ -81,6 +81,8 @@ export default function ClassroomView() {
     // 1) currentClassroom
     if (currentClassroom && normId(currentClassroom) === wantedId) {
       setClassroomData(currentClassroom);
+      // Set classroom ID in session storage for BLE recording
+      sessionStorage.setItem('currentClassroomId', wantedId);
       return;
     }
 
@@ -88,6 +90,8 @@ export default function ClassroomView() {
     const found = (classrooms || []).find((c) => normId(c) === wantedId);
     if (found) {
       setClassroomData(found);
+      // Set classroom ID in session storage for BLE recording
+      sessionStorage.setItem('currentClassroomId', wantedId);
       return;
     }
 
@@ -104,6 +108,10 @@ export default function ClassroomView() {
         if (cancelled) return;
         const f2 = list.find((c) => normId(c) === wantedId);
         setClassroomData(f2 || null);
+        // Set classroom ID in session storage for BLE recording
+        if (f2) {
+          sessionStorage.setItem('currentClassroomId', wantedId);
+        }
       } catch {
         if (!cancelled) setClassroomData(null);
       }
@@ -290,7 +298,7 @@ export default function ClassroomView() {
 
         {/* Device Management - Teachers Only */}
         {isTeacher && wantedId && (
-          <ClassroomDeviceManager classroomId={wantedId} />
+          <NewClassroomDeviceManager classroomId={wantedId} />
         )}
       </Container>
     </Box>

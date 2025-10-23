@@ -67,7 +67,7 @@ import { useClassroom } from '../../contexts/ClassroomContext';
 import client from '../../api/client';
 import styles from "./DeviceGraphingSection.module.css";
 
-const DeviceGraphingSection = ({ deviceId, classroomId }) => {
+const DeviceGraphingSection = ({ deviceId, classroomId, activeTab }) => {
   const { isLoggedIn } = useAuth();
   const { getAnonymousSession } = useClassroom();
   
@@ -174,7 +174,7 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
       let response;
 
       if (isLoggedIn) {
-        response = await client.get(`/device/${deviceId}/data`, {
+        response = await client.get(`/classroom-device/${deviceId}/data`, {
           params: {
             start_time: timeRangeDates.start,
             end_time: timeRangeDates.end,
@@ -184,7 +184,7 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
       } else {
         const anonymousSession = getAnonymousSession();
         if (anonymousSession && classroomId) {
-          response = await client.get(`/device/${deviceId}/data/anonymous`, {
+          response = await client.get(`/classroom-device/${deviceId}/data/anonymous`, {
             params: {
               class_id: classroomId,
               first_name: anonymousSession.first_name,
@@ -609,6 +609,9 @@ const DeviceGraphingSection = ({ deviceId, classroomId }) => {
         return null;
     }
   };
+
+  // Only render when on Historical Data tab
+  if (activeTab !== 1) return null;
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>

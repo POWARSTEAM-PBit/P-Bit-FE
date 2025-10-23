@@ -79,18 +79,28 @@ const recordBatchToBackend = async (readings: Reading[]) => {
     return;
   }
 
-  const response = await fetch('http://127.0.0.1:5000/device/record-ble-batch', {
+  // Get classroom ID from session storage (set when navigating to classroom)
+  const classroomId = sessionStorage.getItem('currentClassroomId');
+  if (!classroomId) {
+    console.warn('No classroom ID available for batch recording');
+    return;
+  }
+
+  const response = await fetch('http://127.0.0.1:5000/classroom-device/record-ble-batch', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
-      'X-Device-Name': sessionStorage.getItem('pbit.deviceName') || 'P-BIT'
+      'X-Device-Name': sessionStorage.getItem('pbit.deviceName') || 'P-BIT',
+      'X-Classroom-ID': classroomId
     },
     body: JSON.stringify({
       readings: readings.map(r => ({
         timestamp: new Date(r.ts).toISOString(),
-        temperature: r.temp ?? r.air_temp ?? r.soil_temp ?? null,
-        humidity: r.hum ?? r.air_hum ?? r.soil_hum ?? null,
+        temperature: r.temp ?? r.air_temp ?? null,
+        thermometer: r.soil_temp ?? null, // Only use soil_temp if available, otherwise null
+        humidity: r.hum ?? r.air_hum ?? null,
+        moisture: r.soil_hum ?? null, // Only use soil_hum if available, otherwise null
         light: r.ldr ?? null,
         sound: r.mic ?? null,
         battery_level: r.batt ?? null
@@ -168,7 +178,7 @@ const recordBatchToBackend = async (readings: Reading[]) => {
     });
     await connectInternal(dev, 'filtered');
     sessionStorage.setItem('pbit.deviceName', dev.name || 'P-BIT');
-    startBatchRecording(); // Start recording BLE data to backend
+    // Don't start recording yet - wait for device to be added to classroom
     return dev.name || 'P-BIT';
   }
   export async function connectBLECompatible() {
@@ -178,9 +188,13 @@ const recordBatchToBackend = async (readings: Reading[]) => {
     });
     await connectInternal(dev, 'compatible');
     sessionStorage.setItem('pbit.deviceName', dev.name || 'P-BIT');
-    startBatchRecording(); // Start recording BLE data to backend
+    // Don't start recording yet - wait for device to be added to classroom
     return dev.name || 'P-BIT';
   }
+  export function startRecordingAfterDeviceAdded() {
+    startBatchRecording(); // Start recording BLE data to backend after device is added to classroom
+  }
+
   export function stop() {
     stopBatchRecording(); // Stop recording and save any remaining data
     try { newChar?.stopNotifications(); } catch {}

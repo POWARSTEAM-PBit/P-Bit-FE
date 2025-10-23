@@ -4,7 +4,7 @@
   align-items: center;
   min-height: calc(100vh - 64px);
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 .paper {
@@ -33,11 +33,11 @@
 
 .icon {
   font-size: 2.5rem !important;
-  color: #667eea;
+  color: #50B1F9;
 }
 
 .title {
-  color: #2c3e50;
+  color: #50B1F9;
   font-weight: 600 !important;
   text-align: center;
 }
@@ -68,18 +68,18 @@
 }
 
 .textField .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-  border-color: #667eea;
+  border-color: #50B1F9;
 }
 
 .textField .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #667eea;
+  border-color: #50B1F9;
 }
 
 .submitButton {
   margin-top: 1rem;
   padding: 12px 24px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background: linear-gradient(135deg, #50B1F9 0%, #67C9FA 100%) !important;
   font-weight: 600;
   text-transform: none;
   font-size: 1.1rem;
@@ -88,7 +88,7 @@
 
 .submitButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 25px rgba(80, 177, 249, 0.3);
 }
 
 .submitButton:disabled {
@@ -107,13 +107,13 @@
 }
 
 .loginLink {
-  color: #667eea !important;
+  color: #50B1F9 !important;
   font-weight: 500;
   text-transform: none;
 }
 
 .loginLink:hover {
-  background-color: rgba(102, 126, 234, 0.1) !important;
+  background-color: rgba(80, 177, 249, 0.1) !important;
 }
 
 /* Dialog Styles */
@@ -127,7 +127,7 @@
   align-items: center;
   gap: 1rem;
   padding: 1.5rem 2rem 1rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #50B1F9 0%, #67C9FA 100%);
   color: white;
 }
 
@@ -161,15 +161,15 @@
 }
 
 .joinMethodCard:hover {
-  border-color: #667eea;
+  border-color: #50B1F9;
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 4px 15px rgba(80, 177, 249, 0.1);
 }
 
 .selectedCard {
-  border-color: #667eea;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+  border-color: #50B1F9;
+  background: linear-gradient(135deg, rgba(80, 177, 249, 0.05) 0%, rgba(103, 201, 250, 0.05) 100%);
+  box-shadow: 0 4px 15px rgba(80, 177, 249, 0.15);
 }
 
 .joinMethodContent {
@@ -187,7 +187,7 @@
 
 .joinMethodIcon {
   font-size: 2rem !important;
-  color: #667eea;
+  color: #50B1F9;
 }
 
 .methodChip {
@@ -212,7 +212,7 @@
 }
 
 .formIcon {
-  color: #667eea;
+  color: #50B1F9;
 }
 
 .formTextField {
@@ -224,11 +224,11 @@
 }
 
 .formTextField .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-  border-color: #667eea;
+  border-color: #50B1F9;
 }
 
 .formTextField .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #667eea;
+  border-color: #50B1F9;
 }
 
 .dialogTextField {
@@ -240,11 +240,11 @@
 }
 
 .dialogTextField .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-  border-color: #667eea;
+  border-color: #50B1F9;
 }
 
 .dialogTextField .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #667eea;
+  border-color: #50B1F9;
 }
 
 .dialogActions {
@@ -259,7 +259,7 @@
 }
 
 .dialogActions .MuiButton-contained {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background: linear-gradient(135deg, #50B1F9 0%, #67C9FA 100%) !important;
 }
 
 @media (max-width: 768px) {

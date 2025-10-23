@@ -113,7 +113,6 @@ export default function Header() {
                 onClose={handleCloseProfileMenu}
               >
                 <MenuItem onClick={() => { handleCloseProfileMenu(); navigate('/profile'); }}>Profile</MenuItem>
-                <MenuItem onClick={handleCloseProfileMenu}>Settings</MenuItem>
                 <MenuItem onClick={() => { handleCloseProfileMenu(); logout(); navigate('/'); }}>Logout</MenuItem>
               </Menu>
             </>
