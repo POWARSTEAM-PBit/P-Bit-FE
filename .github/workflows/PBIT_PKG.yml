@@ -18,8 +18,8 @@ jobs:
       
       - name: Build and Push Image
         run: |
-          docker build -t 13.239.216.36/pbit-frontend:latest .
-          docker push 13.239.216.36/pbit-frontend:latest
+          docker build -t 13.55.144.156/pbit-frontend:latest .
+          docker push 13.55.144.156/pbit-frontend:latest
 
       - name: SSH into EC2 and Run Docker Commands
         uses: appleboy/ssh-action@v1.0.3
