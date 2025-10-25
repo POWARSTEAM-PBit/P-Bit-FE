@@ -1,44 +1,62 @@
 name: P-Bit FE Build Deployment Workflow
+
 on:
   push:
     branches:
       - 'main'
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Configure CA certificate for Docker registry
-        run: |
-          sudo mkdir -p /etc/docker/certs.d/13.239.216.36
-          echo "${{ secrets.REGISTRY_CA_CERT }}" | base64 -d | sudo tee /etc/docker/certs.d/13.239.216.36/ca.crt
-          sudo update-ca-certificates
-      
-      - name: Build and Push Image
-        run: |
-          docker build -t 13.55.144.156/pbit-frontend:latest .
-          docker push 13.55.144.156/pbit-frontend:latest
+  pull_request:
+    branches:
+      - 'main'
 
-      - name: SSH into EC2 and Run Docker Commands
-        uses: appleboy/ssh-action@v1.0.3
+jobs:
+  build-image:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        run: echo "dckr_pat_zCbQbfMN3WfwpQWRvkSPceTHC4Q" | docker login -u "powarsteam" --password-stdin
+
+      - name: Build Docker Image
+        run: docker build -t powarsteam/pbit-fe:latest .
+
+      - name: Push Docker Image to Docker Hub
+        run: docker push powarsteam/pbit-fe:latest
+
+  deploy-to-dev:
+    name: Deploy to Development Environment
+    runs-on: ubuntu-latest
+    needs: build-image  # depends on the previous job finishing successfully
+
+    steps:
+      - name: SSH into Linode and deploy Docker container
+        uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
+          host: 172.233.114.136
+          username: powarsteam
+          key: ${{ secrets.SSH_KEY }}
+          port: 5823
           script: |
-            docker stop pbit-frontend || true
-            docker rm pbit-frontend || true
-            docker rmi pbit-frontend:latest
-            
-            docker pull localhost/pbit-frontend:latest
+            echo "Deploying P-Bit backend..."
+
+            # Stop and remove any old containers if they exist
+            docker stop pbit-fe || true
+            docker rm pbit-fe || true
+
+            # Clean up unused images
+            docker image prune -f || true
+
+            # Pull the latest image from Docker Hub
+            docker pull powarsteam/pbit-fe:latest
 
             # Run the new container with the same configuration as before
             docker run -d \
-              --name pbit-frontend \
-              -p 80:80 \
-              --restart always \
-              -e VITE_API_BASE_URL="${{ secrets.VITE_API_BASE_URL }}" \
-              localhost/pbit-frontend:latest
+            --name pbit-fe \
+            --restart always \
+            -p 80:80 \
+            powarsteam/pbit-fe:latest
+
+            echo "✅ Deployment completed successfully!"
