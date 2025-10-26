@@ -235,7 +235,7 @@ export default function Dashboard() {
                               </Typography>
                               <Chip
                                 icon={getRoleIcon(classroom.user_role)}
-                                label={classroom.user_role}
+                                label={classroom.user_role.charAt(0).toUpperCase() + classroom.user_role.slice(1)}
                                 color={getRoleColor(classroom.user_role)}
                                 size="small"
                                 className={styles.roleChip}
@@ -384,7 +384,7 @@ export default function Dashboard() {
                             </Typography>
                             <Chip
                               icon={getRoleIcon(classroom.user_role)}
-                              label={classroom.user_role}
+                              label={classroom.user_role.charAt(0).toUpperCase() + classroom.user_role.slice(1)}
                               color={getRoleColor(classroom.user_role)}
                               size="small"
                               className={styles.roleChip}
@@ -579,7 +579,7 @@ export default function Dashboard() {
                   >
                     <Box>
                       <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5 }}>
-                        Passphrase:
+                        Classroom Code:
                       </Typography>
                       <Typography 
                         variant="h4" 
@@ -593,7 +593,7 @@ export default function Dashboard() {
                         {shareDialog.classroom.code}
                       </Typography>
                     </Box>
-                    <Tooltip title="Copy passphrase to clipboard">
+                    <Tooltip title="Copy classroom code to clipboard">
                       <IconButton 
                         onClick={() => copyToClipboard(shareDialog.classroom.code)}
                         color="primary"

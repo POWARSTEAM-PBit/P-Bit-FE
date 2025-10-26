@@ -58,9 +58,9 @@ export default function JoinClassroom() {
     const newErrors = {};
     
     if (!classroomCode.trim()) {
-      newErrors.classroomCode = 'Passphrase is required';
+      newErrors.classroomCode = 'Classroom code is required';
     } else if (classroomCode.length < 8) {
-      newErrors.classroomCode = 'Passphrase must be at least 8 characters';
+      newErrors.classroomCode = 'Classroom code must be at least 8 characters';
     }
     
     setErrors(newErrors);
@@ -181,7 +181,7 @@ export default function JoinClassroom() {
             </Box>
 
                           <Typography variant="body1" className={styles.subtitle}>
-                Enter the passphrase provided by your teacher
+                Enter the classroom code provided by your teacher
               </Typography>
 
             {error && (
@@ -193,7 +193,7 @@ export default function JoinClassroom() {
             <form onSubmit={(e) => { e.preventDefault(); handleJoinAttempt(); }} className={styles.form}>
               <TextField
                 fullWidth
-                label="Passphrase"
+                label="Classroom Code"
                 value={classroomCode}
                 onChange={handleInputChange}
                 error={!!errors.classroomCode}
