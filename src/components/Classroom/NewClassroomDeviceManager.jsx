@@ -320,17 +320,36 @@ const NewClassroomDeviceManager = ({ classroomId }) => {
     if (!selectedDevice) return;
 
     const assignmentId = assignmentType === 'public' ? null : assignmentTarget;
-    const result = await updateDeviceAssignment(
-      selectedDevice.id, 
-      assignmentType, 
-      assignmentId
-    );
     
-    if (result.success) {
-      setShowAssignmentDialog(false);
-      setSelectedDevice(null);
-      setAssignmentType('public');
-      setAssignmentTarget('');
+    // Check if this is a new device (no ID) or existing device (has ID)
+    if (selectedDevice.id) {
+      // Existing device - update assignment
+      const result = await updateDeviceAssignment(
+        selectedDevice.id, 
+        assignmentType, 
+        assignmentId
+      );
+      
+      if (result.success) {
+        setShowAssignmentDialog(false);
+        setSelectedDevice(null);
+        setAssignmentType('public');
+        setAssignmentTarget('');
+      }
+    } else {
+      // New device - add to classroom with assignment
+      const result = await addDeviceToClassroom(
+        selectedDevice.device_name, 
+        assignmentType, 
+        assignmentId
+      );
+      
+      if (result.success) {
+        setShowAssignmentDialog(false);
+        setSelectedDevice(null);
+        setAssignmentType('public');
+        setAssignmentTarget('');
+      }
     }
   };
 
@@ -431,7 +450,17 @@ const NewClassroomDeviceManager = ({ classroomId }) => {
                   <Button 
                     variant="outlined" 
                     startIcon={<ViewIcon />}
-                    onClick={() => handleViewDevice('live', bleName)}
+                    onClick={() => {
+                      // For live view of connected device not yet added to classroom
+                      navigate(`/classroom/${classroomId}/device/live`, { 
+                        state: { 
+                          fromClassroom: true, 
+                          deviceName: bleName,
+                          isConnected: true,
+                          isLiveView: true
+                        } 
+                      });
+                    }}
                   >
                     View Live
                   </Button>
@@ -628,7 +657,9 @@ const NewClassroomDeviceManager = ({ classroomId }) => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Device Assignment</DialogTitle>
+        <DialogTitle>
+          {selectedDevice?.id ? 'Edit Device Assignment' : 'Add Device to Classroom'}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             {selectedDevice && (
@@ -699,7 +730,7 @@ const NewClassroomDeviceManager = ({ classroomId }) => {
             variant="contained"
             disabled={loading || (assignmentType !== 'public' && !assignmentTarget)}
           >
-            {loading ? 'Updating...' : 'Update Assignment'}
+            {loading ? (selectedDevice?.id ? 'Updating...' : 'Adding...') : (selectedDevice?.id ? 'Update Assignment' : 'Add Device')}
           </Button>
         </DialogActions>
       </Dialog>
