@@ -37,7 +37,7 @@ import DeviceGraphingSection from '../components/Device/DeviceGraphingSection';
 // Import BLE functionality
 import {
   connectBLEFiltered, connectBLECompatible, stop as stopBLE,
-  isConnected as isBLEConnected
+  isConnected as isBLEConnected, isRecording
 } from '../ble';
 
 const NewDeviceViewPage = () => {
@@ -71,16 +71,8 @@ const NewDeviceViewPage = () => {
       const connected = isConnected();
       setBleConnected(connected);
       
-      // Clear recording flag if disconnected
-      if (!connected) {
-        sessionStorage.removeItem('pbit.recordingStarted');
-      }
-      
-      // If BLE is connected and we have a device in the classroom, start recording
-      if (connected && device && !sessionStorage.getItem('pbit.recordingStarted')) {
-        startRecordingAfterDeviceAdded();
-        sessionStorage.setItem('pbit.recordingStarted', 'true');
-      }
+      // Recording is now automatically started when device connects
+      // No need to manually start recording or manage sessionStorage flags
     }, 1000);
 
     return () => clearInterval(interval);
@@ -324,8 +316,8 @@ const NewDeviceViewPage = () => {
         </Toolbar>
       </AppBar>
 
-      {/* BLE Connection Panel (only show if not connected) */}
-      {!bleConnected && (
+      {/* BLE Connection Panel */}
+      {!bleConnected ? (
         <Paper elevation={2} sx={{ p: 2, mb: 2, bgcolor: 'background.default' }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box display="flex" alignItems="center" gap={1}>
@@ -340,10 +332,24 @@ const NewDeviceViewPage = () => {
             </Box>
           </Box>
         </Paper>
+      ) : (
+        <Paper elevation={2} sx={{ p: 2, mb: 2, bgcolor: 'success.light' }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Box display="flex" alignItems="center" gap={1}>
+              <BluetoothConnectedIcon color="success" />
+              <Typography variant="subtitle1" color="success.contrastText">
+                Device Connected - {isRecording() ? 'Recording Active' : 'Recording Inactive'}
+              </Typography>
+            </Box>
+            <Button variant="outlined" color="error" onClick={stopBLE}>
+              Disconnect
+            </Button>
+          </Box>
+        </Paper>
       )}
 
       {/* Recording Status Panel (show if connected but not recording) */}
-      {bleConnected && !sessionStorage.getItem('pbit.recordingStarted') && (
+      {bleConnected && !isRecording() && (
         <Paper elevation={2} sx={{ p: 2, mb: 2, bgcolor: 'warning.light' }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box display="flex" alignItems="center" gap={1}>
@@ -356,7 +362,6 @@ const NewDeviceViewPage = () => {
               color="warning" 
               onClick={() => {
                 startRecordingAfterDeviceAdded();
-                sessionStorage.setItem('pbit.recordingStarted', 'true');
               }}
             >
               Start Recording

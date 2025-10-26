@@ -147,8 +147,8 @@ const NewClassroomDeviceManager = ({ classroomId }) => {
 
       if (response.data.success) {
         await getClassroomDevices();
-        // Start recording BLE data now that device is added to classroom
-        startRecordingAfterDeviceAdded();
+        // Recording is now automatically started when device connects
+        // No need to manually start recording here
         return { success: true, data: response.data.data };
       } else {
         setError(response.data.message);

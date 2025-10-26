@@ -86,7 +86,7 @@ const recordBatchToBackend = async (readings: Reading[]) => {
     return;
   }
 
-  const response = await fetch('http://127.0.0.1:5000/classroom-device/record-ble-batch', {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000/'}classroom-device/record-ble-batch`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -178,7 +178,8 @@ const recordBatchToBackend = async (readings: Reading[]) => {
     });
     await connectInternal(dev, 'filtered');
     sessionStorage.setItem('pbit.deviceName', dev.name || 'P-BIT');
-    // Don't start recording yet - wait for device to be added to classroom
+    // Start recording immediately when device is connected
+    startBatchRecording();
     return dev.name || 'P-BIT';
   }
   export async function connectBLECompatible() {
@@ -188,11 +189,16 @@ const recordBatchToBackend = async (readings: Reading[]) => {
     });
     await connectInternal(dev, 'compatible');
     sessionStorage.setItem('pbit.deviceName', dev.name || 'P-BIT');
-    // Don't start recording yet - wait for device to be added to classroom
+    // Start recording immediately when device is connected
+    startBatchRecording();
     return dev.name || 'P-BIT';
   }
   export function startRecordingAfterDeviceAdded() {
     startBatchRecording(); // Start recording BLE data to backend after device is added to classroom
+  }
+
+  export function isRecording() {
+    return batchTimer !== null;
   }
 
   export function stop() {
