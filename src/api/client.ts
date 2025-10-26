@@ -5,7 +5,7 @@ import axios from "axios";
  * - Prefer reading from .env (Vite style: VITE_*)
  * - Fallback to localhost:5000 so local dev still works if .env is missing
  */
-const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://172-233-114-136.ip.linodeusercontent.com:8000/'; 
+const baseUrl = 'http://172-233-114-136.ip.linodeusercontent.com:8000/';
 
 const client = axios.create({
   baseURL: baseUrl,
