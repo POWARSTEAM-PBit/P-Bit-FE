@@ -198,7 +198,7 @@ export default function ClassroomView() {
             </Typography>
             <Box className={styles.headerMeta}>
               <Chip icon={<School />} label={classroomData.subject} color="primary" className={styles.subjectChip} />
-              <Chip icon={<Group />} label={classroomData.user_role} color="secondary" className={styles.roleChip} />
+              <Chip icon={<Group />} label={classroomData.user_role.charAt(0).toUpperCase() + classroomData.user_role.slice(1)} color="secondary" className={styles.roleChip} />
               {classroomData.is_cached && (
                 <Chip 
                   label="Session Restored" 
